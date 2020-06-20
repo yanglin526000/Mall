@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>mall-parent</artifactId>
+        <groupId>com.mall</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>mall-service-api</artifactId>
+
+    <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>mall-service-content-api</module>
+        <module>mall-service-goods-api</module>
+        <module>mall-service-search-api</module>
+        <module>mall-service-user-api</module>
+        <module>mall-web-item-api</module>
+    </modules>
+    <packaging>pom</packaging>
+    <description>
+        所有微服务工程的API抽取(java bean || Feign)
+    </description>
+
+    <dependencies>
+
+        <!-- mall-common:通用的common 要有feign的依赖 -->
+        <dependency>
+            <groupId>com.mall</groupId>
+            <artifactId>mall-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Persistence Api -->
+        <!-- https://mvnrepository.com/artifact/javax.persistence/persistence-api -->
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+
+    </dependencies>
+
+</project>
