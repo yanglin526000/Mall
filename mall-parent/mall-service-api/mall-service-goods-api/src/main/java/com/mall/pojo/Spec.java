@@ -1,6 +1,6 @@
-package com.mall.pojo.pojo;
+package com.mall.pojo;
 
-import com.mall.pojo.pojo.common.CommonPo;
+import com.mall.pojo.common.CommonPo;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -9,21 +9,21 @@ import javax.persistence.Table;
 
 /**
  * <p>
- * Para
+ * Spec
  * </p>
  *
  * @author yanglin
- * @date 2020-06-21 13:58:12
+ * @date 2020-06-21 14:09:39
  */
 @Data
 @Entity
-@Table(name = "para")
-public class Para extends CommonPo {
+@Table(name = "spec")
+public class Spec extends CommonPo {
 
     @Column(name = "options")
-    private String options;
+    private String options; //规格选项
 
     @Column(name = "template_id")
-    private Integer templateId;
+    private Long templateId; //模板ID
 
 }
