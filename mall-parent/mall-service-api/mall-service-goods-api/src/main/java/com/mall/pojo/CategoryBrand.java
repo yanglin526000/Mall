@@ -5,7 +5,6 @@ import lombok.Data;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.Table;
 
 /****
@@ -18,7 +17,6 @@ import javax.persistence.Table;
 @Table(name = "category_brand")
 public class CategoryBrand extends CommonPo {
 
-    @Id
     @Column(name = "category_id")
     private Integer categoryId;
 
