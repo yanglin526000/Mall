@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * <p>
@@ -15,6 +16,7 @@ import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
  */
 @SpringBootApplication
 @EnableEurekaClient
+@ComponentScan(basePackages = {"com.mall.swagger2", "com.mall.goods"})
 @EntityScan(basePackages = "com.mall.pojo")
 public class GoodsApplication {
     public static void main(String[] args) {

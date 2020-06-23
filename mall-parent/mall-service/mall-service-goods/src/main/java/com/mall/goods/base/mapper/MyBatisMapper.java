@@ -1,4 +1,4 @@
-package com.mall.goods.mapper;
+package com.mall.goods.base.mapper;
 
 import org.springframework.data.repository.NoRepositoryBean;
 import tk.mybatis.mapper.common.*;
