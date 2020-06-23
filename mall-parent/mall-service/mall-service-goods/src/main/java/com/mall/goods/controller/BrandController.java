@@ -1,6 +1,6 @@
 package com.mall.goods.controller;
 
-import com.mall.goods.base.controller.BaseMyBatisController;
+import com.mall.base.controller.BaseHibernateController;
 import com.mall.pojo.Brand;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/brand")
 @CrossOrigin
-public class BrandController extends BaseMyBatisController<Brand> {
+public class BrandController extends BaseHibernateController<Brand> {
 
 
 }

@@ -1,5 +1,6 @@
 package com.mall.pojo.common;
 
+import com.mall.utils.ConstantUtil;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -52,7 +53,12 @@ public class CommonPo {
     @Column(name = "remark")
     private String remark;
 
+    @ApiModelProperty(hidden = true)
     @Column(name = "seq", columnDefinition = "INT UNSIGNED")
     private Long seq;
+
+    @ApiModelProperty(hidden = true)
+    @Column(name = "is_delete", columnDefinition = "TINYINT(2)", nullable = false)
+    private Byte isDelete = ConstantUtil.IS_NOT_DELETE;
 
 }

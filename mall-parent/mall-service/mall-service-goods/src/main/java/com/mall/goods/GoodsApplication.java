@@ -16,7 +16,7 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @EnableEurekaClient
-@ComponentScan(basePackages = {"com.mall.swagger2", "com.mall.goods"})
+@ComponentScan(basePackages = {"com.mall.swagger2", "com.mall.goods", "com.mall.base"})
 @EntityScan(basePackages = "com.mall.pojo")
 public class GoodsApplication {
     public static void main(String[] args) {
