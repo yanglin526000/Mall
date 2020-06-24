@@ -1,4 +1,4 @@
-package com.mall.utils;
+package com.mall.common.utils;
 
 import java.io.Serializable;
 import java.util.List;

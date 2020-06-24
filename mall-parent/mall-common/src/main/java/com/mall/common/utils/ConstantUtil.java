@@ -1,4 +1,4 @@
-package com.mall.utils;
+package com.mall.common.utils;
 
 import org.springframework.stereotype.Component;
 
@@ -37,5 +37,11 @@ public final class ConstantUtil {
      * Not Deleted flag
      */
     public static final Byte IS_NOT_DELETE = 0;
+
+    /**
+     * Swagger2 Package Name
+     */
+    public static final String SWAGGER2_PACKAGE_NAME = "com.mall.common.*";
+
 
 }

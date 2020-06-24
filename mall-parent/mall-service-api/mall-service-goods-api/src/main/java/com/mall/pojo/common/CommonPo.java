@@ -1,6 +1,6 @@
 package com.mall.pojo.common;
 
-import com.mall.utils.ConstantUtil;
+import com.mall.common.utils.ConstantUtil;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;

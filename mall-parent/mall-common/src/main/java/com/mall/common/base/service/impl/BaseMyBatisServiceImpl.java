@@ -1,6 +1,6 @@
-package com.mall.goods.base.service.impl;
+package com.mall.common.base.service.impl;
 
-import com.mall.goods.base.service.BaseMyBatisService;
+import com.mall.common.base.service.BaseMyBatisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.common.*;

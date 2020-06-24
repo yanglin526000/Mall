@@ -1,6 +1,6 @@
-package com.mall.goods.base.controller;
+package com.mall.common.base.controller;
 
-import com.mall.goods.base.service.BaseMyBatisService;
+import com.mall.common.base.service.BaseMyBatisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

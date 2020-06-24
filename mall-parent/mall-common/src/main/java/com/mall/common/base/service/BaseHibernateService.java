@@ -1,4 +1,4 @@
-package com.mall.base.service;
+package com.mall.common.base.service;
 
 import org.springframework.data.domain.Pageable;
 

@@ -1,9 +1,9 @@
-package com.mall.base.service.impl;
+package com.mall.common.base.service.impl;
 
-import com.mall.base.service.BaseHibernateService;
-import com.mall.utils.ConstantUtil;
-import com.mall.utils.ParamUtil;
-import com.mall.utils.ResultMap;
+import com.mall.common.base.service.BaseHibernateService;
+import com.mall.common.utils.ConstantUtil;
+import com.mall.common.utils.ParamUtil;
+import com.mall.common.utils.ResultMap;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

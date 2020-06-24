@@ -1,8 +1,8 @@
-package com.mall.base.controller;
+package com.mall.common.base.controller;
 
-import com.mall.base.service.BaseHibernateService;
-import com.mall.utils.ConstantUtil;
-import com.mall.utils.ParamUtil;
+import com.mall.common.base.service.BaseHibernateService;
+import com.mall.common.utils.ConstantUtil;
+import com.mall.common.utils.ParamUtil;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;

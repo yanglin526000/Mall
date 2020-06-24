@@ -1,4 +1,4 @@
-package com.mall.swagger2;
+package com.mall.common.swagger2;
 
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Value;

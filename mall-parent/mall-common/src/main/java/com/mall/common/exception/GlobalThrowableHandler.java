@@ -1,6 +1,6 @@
-package com.mall.exception;
+package com.mall.common.exception;
 
-import com.mall.utils.ConstantUtil;
+import com.mall.common.utils.ConstantUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
