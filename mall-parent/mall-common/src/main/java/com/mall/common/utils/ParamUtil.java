@@ -1,8 +1,10 @@
 package com.mall.common.utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * <p>
@@ -12,7 +14,7 @@ import java.util.Date;
  * @author yanglin
  * @date 2020-06-22 18:56:03
  */
-public class ParamUtil {
+public final class ParamUtil {
 
     /**
      * <p>
@@ -26,8 +28,8 @@ public class ParamUtil {
      * @date 2020-06-22 18:56:18
      */
     public static void putField(Object o, String fieldName, Object fieldValue) {
-        // 属性值为空，不设置值
-        if (fieldValue == null) {
+        // Null value handle
+        if (o == null || fieldValue == null) {
             return;
         }
         try {
@@ -103,6 +105,107 @@ public class ParamUtil {
                 }
             }
         }
+    }
+
+    /**
+     * <p>
+     * Get Field Value From Object
+     * </p>
+     *
+     * @param o         Object
+     * @param fieldName fieldName
+     * @return java.lang.Object
+     * @author yanglin
+     * @date 2020-06-24 23:05:30
+     */
+    public static Object getField(Object o, String fieldName) {
+        // Null value handle
+        if (o == null || fieldName == null) {
+            return null;
+        }
+        for (Field f : getSelfAndSuperClassFields(o)) {
+            if (fieldName.equals(f.getName())) {
+                f.setAccessible(true);
+                try {
+                    return f.get(o);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+
+    }
+
+    /**
+     * <p>
+     * Get Self And Super Class Fields
+     * </p>
+     *
+     * @param o Object
+     * @return java.util.List<java.lang.reflect.Field>
+     * @author yanglin
+     * @date 2020-06-24 23:19:18
+     */
+    public static List<Field> getSelfAndSuperClassFields(Object o) {
+        // Null value handle
+        if (o == null) {
+            return null;
+        }
+        List<Field> fieldList = new ArrayList<>();
+        Class<?> suCl = o.getClass();
+        do {
+            for (Field f : suCl.getDeclaredFields()) {
+                fieldList.add(f);
+            }
+        } while ((suCl = suCl.getSuperclass()) != null);
+        return fieldList;
+    }
+
+    /**
+     * <p>
+     * Put Values To Object
+     * </p>
+     *
+     * @param from Object
+     * @param to   Object
+     * @author yanglin
+     * @date 2020-06-24 23:45:06
+     */
+    public static void putValuesToObject(Object from, Object to) {
+        for (Field f : getSelfAndSuperClassFields(from)) {
+            f.setAccessible(true);
+            try {
+                ParamUtil.putField(to, f.getName(), f.get(from));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * <p>
+     * Get Custom Constructor
+     * </p>
+     *
+     * @param c Class
+     * @return java.lang.Object
+     * @author yanglin
+     * @date 2020-06-24 23:51:15
+     */
+    public static Object getCustomConstructor(Class c) {
+        try {
+            return c.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

@@ -13,7 +13,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -36,30 +38,9 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
     @Transactional
     @Override
     public T save(T t) {
-        Object o = null;
-        try {
-            Field idField = t.getClass().getSuperclass().getDeclaredField("id");
-            idField.setAccessible(true);
-            Object idO = idField.get(t);
-            if (idO == null) {
-                // 新增-初始化实例对象
-                o = t.getClass().getDeclaredConstructor().newInstance();
-            } else {
-                // 修改-获取实例对象
-                o = entityManager.find(t.getClass(), idO);
-            }
-            List<Field> fs = new ArrayList<>(Arrays.asList(t.getClass().getDeclaredFields()));
-            List<Field> fsP = Arrays.asList(t.getClass().getSuperclass().getDeclaredFields());
-            fs.addAll(fsP);
-            for (Field f : fs) {
-                if (!"serialVersionUID".equals(f.getName())) {
-                    f.setAccessible(true);
-                    ParamUtil.putField(o, f.getName(), f.get(t));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Object idO = ParamUtil.getField(t, "id");
+        Object o = idO == null ? ParamUtil.getCustomConstructor(t.getClass()) : entityManager.find(t.getClass(), idO);
+        ParamUtil.putValuesToObject(t, o);
         return (T) entityManager.merge((T) o.getClass().cast(o));
     }
 
@@ -67,18 +48,8 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
     @Transactional
     @Override
     public T delete(T t) {
-        Object o = null;
-        try {
-            // 根据id获取数据
-            Field idField = t.getClass().getSuperclass().getDeclaredField("id");
-            idField.setAccessible(true);
-            Object idO = idField.get(t);
-            o = entityManager.find(t.getClass(), idO);
-            // 设置删除字段
-            ParamUtil.putField(o, "isDelete", ConstantUtil.IS_DELETE);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Object idO = ParamUtil.getField(t, "id");
+        Object o = entityManager.find(t.getClass(), idO);
         entityManager.remove(o);
         return (T) o;
     }
@@ -86,16 +57,8 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T info(T t) {
-        Object o = null;
-        try {
-            Field idField = t.getClass().getSuperclass().getDeclaredField("id");
-            idField.setAccessible(true);
-            Object idO = idField.get(t);
-            o = entityManager.find(t.getClass(), idO);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return (T) o;
+        Object idO = ParamUtil.getField(t, "id");
+        return (T) entityManager.find(t.getClass(), idO);
     }
 
     @Override
