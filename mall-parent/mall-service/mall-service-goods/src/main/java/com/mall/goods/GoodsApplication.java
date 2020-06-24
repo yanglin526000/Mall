@@ -17,7 +17,7 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @EnableEurekaClient
-@ComponentScan(basePackages = {ConstantUtil.SWAGGER2_PACKAGE_NAME, "com.mall.goods"})
+@ComponentScan(basePackages = {ConstantUtil.COMMON_PACKAGE_NAME, "com.mall.goods"})
 @EntityScan(basePackages = "com.mall.pojo")
 public class GoodsApplication {
     /**

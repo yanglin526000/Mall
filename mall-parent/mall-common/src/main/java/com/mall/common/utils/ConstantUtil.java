@@ -39,9 +39,9 @@ public final class ConstantUtil {
     public static final Byte IS_NOT_DELETE = 0;
 
     /**
-     * Swagger2 Package Name
+     * Common Package Name
      */
-    public static final String SWAGGER2_PACKAGE_NAME = "com.mall.common.*";
+    public static final String COMMON_PACKAGE_NAME = "com.mall.common.*";
 
 
 }
