@@ -31,7 +31,7 @@ public abstract class BaseHibernateController<T> {
 
     /**
      * <p>
-     * Save
+     * Add
      * </p>
      *
      * @param t T
@@ -40,9 +40,27 @@ public abstract class BaseHibernateController<T> {
      * @author yanglin
      * @date 2020-06-15 20:32:05
      */
-    @ApiOperation(value = "保存接口，body参数中有id，是更新；否则是新增（自动生成）")
-    @RequestMapping(value = "", method = {RequestMethod.POST, RequestMethod.PUT})
-    public ResponseEntity<T> save(@RequestBody T t) throws SecurityException, IllegalArgumentException {
+    @PostMapping
+    public ResponseEntity<T> add(@RequestBody T t) throws SecurityException, IllegalArgumentException {
+        return ResponseEntity.ok(baseHibernateService.save(t));
+    }
+
+    /**
+     * <p>
+     * Update
+     * </p>
+     *
+     * @param t T
+     * @return org.springframework.http.ResponseEntity<T>
+     * @throws
+     * @author yanglin
+     * @date 2020-06-15 20:32:05
+     */
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "自增主键", required = true, dataType = "String", paramType = "path")})
+    @PutMapping("{id}")
+    public ResponseEntity<T> update(@PathVariable Object id, @RequestBody T t) throws SecurityException, IllegalArgumentException {
+        ParamUtil.putField(t, "id", id);
         return ResponseEntity.ok(baseHibernateService.save(t));
     }
 

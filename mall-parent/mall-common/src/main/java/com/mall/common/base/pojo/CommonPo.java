@@ -21,7 +21,7 @@ import java.util.Date;
 @MappedSuperclass
 public class CommonPo {
 
-    @ApiModelProperty(example = "1")
+    @ApiModelProperty(hidden = true)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", columnDefinition = "INT UNSIGNED")
