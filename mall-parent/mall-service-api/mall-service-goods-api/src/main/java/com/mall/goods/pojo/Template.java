@@ -1,6 +1,6 @@
-package com.mall.pojo;
+package com.mall.goods.pojo;
 
-import com.mall.pojo.common.CommonPo;
+import com.mall.common.base.pojo.CommonPo;
 import lombok.Data;
 
 import javax.persistence.Column;

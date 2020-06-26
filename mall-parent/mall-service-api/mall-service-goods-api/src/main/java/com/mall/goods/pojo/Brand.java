@@ -1,6 +1,6 @@
-package com.mall.pojo;
+package com.mall.goods.pojo;
 
-import com.mall.pojo.common.CommonPo;
+import com.mall.common.base.pojo.CommonPo;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -9,21 +9,21 @@ import javax.persistence.Table;
 
 /**
  * <p>
- * Album
+ * Brand
  * </p>
  *
  * @author yanglin
- * @date 2020-06-21 11:50:19
+ * @date 2020-06-21 12:03:14
  */
 @Data
 @Entity
-@Table(name = "album")
-public class Album extends CommonPo {
+@Table(name = "brand")
+public class Brand extends CommonPo {
 
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "image_items")
-    private String imageItems;
+    @Column(name = "letter")
+    private String letter;
 
 }

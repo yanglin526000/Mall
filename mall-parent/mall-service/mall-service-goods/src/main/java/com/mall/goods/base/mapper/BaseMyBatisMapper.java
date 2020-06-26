@@ -1,6 +1,6 @@
 package com.mall.goods.base.mapper;
 
-import com.mall.pojo.Brand;
+import com.mall.goods.pojo.Brand;
 import org.apache.ibatis.annotations.Mapper;
 
 

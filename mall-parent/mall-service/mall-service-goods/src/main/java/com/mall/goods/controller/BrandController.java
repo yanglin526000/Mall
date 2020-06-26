@@ -1,7 +1,7 @@
 package com.mall.goods.controller;
 
 import com.mall.common.base.controller.BaseHibernateController;
-import com.mall.pojo.Brand;
+import com.mall.goods.pojo.Brand;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

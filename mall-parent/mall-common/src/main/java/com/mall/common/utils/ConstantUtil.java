@@ -39,9 +39,23 @@ public final class ConstantUtil {
     public static final Byte IS_NOT_DELETE = 0;
 
     /**
+     * Project Package Name
+     */
+    public static final String PROJECT_PACKAGE_NAME = "com.mall.";
+
+    /**
      * Common Package Name
      */
-    public static final String COMMON_PACKAGE_NAME = "com.mall.common.*";
+    public static final String COMMON_PACKAGE_NAME = PROJECT_PACKAGE_NAME + "common.*";
 
+    /**
+     * Goods Package Name
+     */
+    public static final String POJO_PACKAGE_NAME = ".pojo";
+
+    /**
+     * Goods Package Name
+     */
+    public static final String GOODS_PACKAGE_NAME = PROJECT_PACKAGE_NAME + "goods" + POJO_PACKAGE_NAME;
 
 }
