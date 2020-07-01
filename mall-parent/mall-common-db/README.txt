@@ -3,7 +3,7 @@ Install MySQL8 in Docker
     docker search mysql
     docker pull mysql:8.0.20(当时搜索的最新版本)
 2.运行镜像，设置root账号初始密码（123456），映射本地宿主机端口3306到Docker端口3306。测试过程没有挂载本地数据盘：
-    docker run -p 3306:3306 --name MYSQL8.0.20 -e MYSQL_ROOT_PASSWORD=root -d mysql:8.0.20
+    docker run -p 3307:3306 --name MYSQL8.0.20 -e MYSQL_ROOT_PASSWORD=root -d mysql:8.0.20
     解释下这条命令的参数：
         -p 3306:3306：将容器内的3306端口映射到实体机3306端口
         --name MYSQL8.0.20：给这个容器取一个容器记住的名字
