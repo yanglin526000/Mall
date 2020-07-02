@@ -4,9 +4,8 @@ The installation steps of FastDFS：
 2.Run tracker
     docker run -d --name tracker --net=host morunchang/fastdfs sh tracker.sh
 3.Run storage
-    docker run -d --name storage --net=host -e TRACKER_IP=172.20.10.9:22122 -e GROUP_NAME=group1 morunchang/fastdfs sh storage.sh
+    docker run -d --name storage --net=host -e TRACKER_IP=172.17.142.193:22122 -e GROUP_NAME=group1 morunchang/fastdfs sh storage.sh
     docker run -d --name storage --net=host -e TRACKER_IP=172.20.10.9:22122 -e GROUP_NAME=M00 morunchang/fastdfs sh storage.sh
-
 
 使用的网络模式是–net=host, TRACKER_IP=192.168.0.104是宿主机的IP,
 group1是组名，即storage的组
