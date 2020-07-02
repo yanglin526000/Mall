@@ -3,6 +3,7 @@ package com.mall.file.controller;
 import com.mall.file.file.FastDFSFile;
 import com.mall.file.utils.FastDFSUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,7 +22,7 @@ import java.net.URLEncoder;
 @CrossOrigin
 public class FileUploadController {
 
-    private static final String filePath = "D:/file/";
+    private static final String filePath = ClassUtils.getDefaultClassLoader().getResource("").getPath();
 
     /**
      * <p>
@@ -81,7 +82,7 @@ public class FileUploadController {
      * @author yanglin
      * @date 2020-07-02 20:24:09
      */
-    @GetMapping("/download/{fileName}")
+    @PostMapping("/download/{fileName}")
     public void downLoad(HttpServletResponse response, @PathVariable String fileName) throws UnsupportedEncodingException {
         fileName += ".jpg";
         File file = new File(filePath + "/" + fileName);
