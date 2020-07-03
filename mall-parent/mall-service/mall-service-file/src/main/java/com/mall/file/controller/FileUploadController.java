@@ -10,7 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.net.URLEncoder;
 
 /**
  * @Author: nullWagesException
@@ -82,13 +81,13 @@ public class FileUploadController {
      * @author yanglin
      * @date 2020-07-02 20:24:09
      */
-    @PostMapping("/download/{fileName}")
-    public void downLoad(HttpServletResponse response, @PathVariable String fileName) throws UnsupportedEncodingException {
-        fileName += ".jpg";
+    @PostMapping("/download")
+    public void downLoad(HttpServletResponse response, @RequestParam String fileName) throws UnsupportedEncodingException {
         File file = new File(filePath + "/" + fileName);
         if (file.exists()) {
-            response.setContentType("application/force-download");
-            response.setHeader("Content-Disposition", "attachment;fileName=" + URLEncoder.encode(fileName, "utf8"));
+            response.setHeader("content-type", "application/octet-stream");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;fileName=" + new String(fileName.getBytes("utf-8"), "ISO8859-1"));
             byte[] buffer = new byte[1024];
             //输出流
             OutputStream os = null;
@@ -104,6 +103,7 @@ public class FileUploadController {
                 e.printStackTrace();
             }
         }
+
     }
 
 }
