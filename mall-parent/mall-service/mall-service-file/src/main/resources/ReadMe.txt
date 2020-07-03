@@ -10,6 +10,7 @@ The installation steps of FastDFS：
     firewall-cmd --zone=public --add-port 22000/tcp --permanent;
     firewall-cmd --zone=public --add-port 22122/tcp --permanent;
     firewall-cmd --zone=public --add-port 23000/tcp --permanent;
+    firewall-cmd --zone=public --add-port 8080/tcp --permanent;
     firewall-cmd --reload;
 
 使用的网络模式是–net=host, TRACKER_IP=192.168.0.104是宿主机的IP,
