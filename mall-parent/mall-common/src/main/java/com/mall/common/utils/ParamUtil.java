@@ -139,6 +139,32 @@ public final class ParamUtil {
 
     /**
      * <p>
+     * Get Field Value From Object
+     * </p>
+     *
+     * @param o
+     * @param field
+     * @return java.lang.Object
+     * @author yanglin
+     * @date 2020-07-05 22:49:49
+     */
+    public static Object getField(Object o, Field field) {
+        // Null value handle
+        if (o == null || field == null) {
+            return null;
+        }
+        field.setAccessible(true);
+        try {
+            return field.get(o);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+
+    /**
+     * <p>
      * Get Self And Super Class Fields
      * </p>
      *

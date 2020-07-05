@@ -61,96 +61,72 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
         return (T) entityManager.find(t.getClass(), idO);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Map<String, Object> list(T t, Pageable pageable) {
         Map<String, Object> result = new HashMap<>(ConstantUtil.RESULT_MAP_INIT_COUNT);
         // 设置条件
-        String aliasSql = "D";
+        String simName = t.getClass().getSimpleName();
         StringBuilder sqlCondition = new StringBuilder(" WHERE 1 = 1");
-        StringBuilder sqlSort = new StringBuilder(" ORDER BY " + aliasSql + ".id DESC ");
-        Field[] fs = t.getClass().getDeclaredFields();
-        try {
-            for (int i = 0, length = fs.length; i < length; i++) {
-                if (i > 0) {
-                    Field f = fs[i];
-                    f.setAccessible(true);
-                    if (f.get(t) != null && !"".equals(f.get(t).toString().trim())) {
-                        if (String.class.getName().equals(f.getType().getName())) {
-                            sqlCondition.append(" AND " + aliasSql + "." + f.getName() + " LIKE '%" + f.get(t) + "%'");
-                        } else {
-                            sqlCondition.append(" AND " + aliasSql + "." + f.getName() + "='" + f.get(t) + "'");
-                        }
-                    }
+        StringBuilder sqlSort = new StringBuilder(" ORDER BY " + simName + ".id DESC ");
+        List<Field> fs = ParamUtil.getSelfAndSuperClassFields(t);
+        for (Field f : fs) {
+            Object fieldValue = ParamUtil.getField(t, f);
+            if (fieldValue != null && !"".equals(fieldValue.toString().trim())) {
+                if (String.class.getName().equals(f.getType().getName())) {
+                    sqlCondition.append(" AND ").append(simName).append(".").append(f.getName()).append(" LIKE '%").append(fieldValue).append("%'");
+                } else {
+                    sqlCondition.append(" AND ").append(simName).append(".").append(f.getName()).append("='").append(fieldValue).append("'");
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        // 查询的是存在的数据
-        sqlCondition.append(" AND " + aliasSql + ".isDelete=0 ");
-        // 对象名
-        String simName = t.getClass().getSimpleName();
         // 查询列表
-        Query queryList = entityManager.createQuery("FROM " + simName + " AS " + aliasSql + sqlCondition + sqlSort);
+        Query queryList = entityManager.createQuery("FROM " + simName + " AS " + simName + sqlCondition + sqlSort);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize());
         queryList.setMaxResults(pageable.getPageSize());
-        @SuppressWarnings("unchecked")
         List<T> list = queryList.getResultList();
         result.put("list", list);
         // 查询总数
-        Query queryCount = entityManager
-                .createQuery("SELECT COUNT(1) FROM " + simName + " AS " + aliasSql + sqlCondition);
+        Query queryCount = entityManager.createQuery("SELECT COUNT(1) FROM " + simName + " AS " + simName + sqlCondition);
         Long count = (Long) queryCount.getSingleResult();
         // 分页信息
-        ResultMap.pageInfo(result, count, pageable.getPageNumber(), pageable.getPageSize());
-        return result;
+        return ResultMap.pageInfo(result, count, pageable.getPageNumber(), pageable.getPageSize());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Map<String, Object> listAccurate(T t, Pageable pageable) {
         Map<String, Object> result = new HashMap<>(ConstantUtil.RESULT_MAP_INIT_COUNT);
         // 设置条件
-        String aliasSql = "D";
-        StringBuilder sqlCondition = new StringBuilder(" WHERE 1 = 1");
-        StringBuilder sqlSort = new StringBuilder(" ORDER BY " + aliasSql + ".id DESC ");
-        Field[] fs = t.getClass().getDeclaredFields();
-        try {
-            for (int i = 0, length = fs.length; i < length; i++) {
-                if (i > 0) {
-                    Field f = fs[i];
-                    f.setAccessible(true);
-                    if (f.get(t) != null && !"".equals(f.get(t).toString().trim())) {
-                        sqlCondition.append(" AND " + aliasSql + "." + f.getName() + "='" + f.get(t) + "'");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // 查询的是存在的数据
-        sqlCondition.append(" AND " + aliasSql + ".isDelete=0 ");
-        // 对象名
         String simName = t.getClass().getSimpleName();
+        StringBuilder sqlCondition = new StringBuilder(" WHERE 1 = 1");
+        StringBuilder sqlSort = new StringBuilder(" ORDER BY " + simName + ".id DESC ");
+        List<Field> fs = ParamUtil.getSelfAndSuperClassFields(t);
+        for (Field f : fs) {
+            Object fieldValue = ParamUtil.getField(t, f);
+            if (fieldValue != null && !"".equals(fieldValue.toString().trim())) {
+                sqlCondition.append(" AND " + simName + "." + f.getName() + "='" + fieldValue + "'");
+            }
+        }
         // 查询列表
-        Query queryList = entityManager.createQuery("FROM " + simName + " AS " + aliasSql + sqlCondition + sqlSort);
+        Query queryList = entityManager.createQuery("FROM " + simName + " AS " + simName + sqlCondition + sqlSort);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize());
         queryList.setMaxResults(pageable.getPageSize());
-        @SuppressWarnings("unchecked")
         List<T> list = queryList.getResultList();
         result.put("list", list);
         // 查询总数
-        Query queryCount = entityManager
-                .createQuery("SELECT COUNT(1) FROM " + simName + " AS " + aliasSql + sqlCondition);
+        Query queryCount = entityManager.createQuery("SELECT COUNT(1) FROM " + simName + " AS " + simName + sqlCondition);
         Long count = (Long) queryCount.getSingleResult();
         // 分页信息
-        ResultMap.pageInfo(result, count, pageable.getPageNumber(), pageable.getPageSize());
-        return result;
+        return ResultMap.pageInfo(result, count, pageable.getPageNumber(), pageable.getPageSize());
     }
 
     @Override
     public Map<String, Object> listAccurate(T t) {
-        Pageable pageable = PageRequest.of(Integer.parseInt(ConstantUtil.DEFAULT_PAGE_INDEX),
-                Integer.parseInt(ConstantUtil.DEFAULT_PAGE_SIZE));
+        Pageable pageable = PageRequest.of(
+                Integer.parseInt(ConstantUtil.DEFAULT_PAGE_INDEX),
+                Integer.parseInt(ConstantUtil.DEFAULT_PAGE_SIZE)
+        );
         return listAccurate(t, pageable);
     }
 }
