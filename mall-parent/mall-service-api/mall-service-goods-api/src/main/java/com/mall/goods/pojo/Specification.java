@@ -9,7 +9,7 @@ import javax.persistence.Table;
 
 /**
  * <p>
- * Spec
+ * Specification
  * </p>
  *
  * @author yanglin
@@ -17,8 +17,8 @@ import javax.persistence.Table;
  */
 @Data
 @Entity
-@Table(name = "spec")
-public class Spec extends CommonPo {
+@Table(name = "specification")
+public class Specification extends CommonPo {
 
     @Column(name = "options")
     private String options; //规格选项

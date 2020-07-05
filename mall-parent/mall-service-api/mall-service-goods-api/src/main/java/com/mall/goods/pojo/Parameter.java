@@ -9,7 +9,7 @@ import javax.persistence.Table;
 
 /**
  * <p>
- * Para
+ * Parameter
  * </p>
  *
  * @author yanglin
@@ -17,8 +17,8 @@ import javax.persistence.Table;
  */
 @Data
 @Entity
-@Table(name = "para")
-public class Para extends CommonPo {
+@Table(name = "parameter")
+public class Parameter extends CommonPo {
 
     @Column(name = "options")
     private String options;
