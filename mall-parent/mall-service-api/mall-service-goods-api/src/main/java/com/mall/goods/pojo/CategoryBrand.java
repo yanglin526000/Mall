@@ -7,11 +7,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-/****
- * @Author:admin
- * @Description:CategoryBrand构建
- * @Date 2019/6/14 19:13
- *****/
+/**
+ * <p>
+ * Category Brand
+ * </p>
+ *
+ * @author yanglin
+ * @date 2020-07-06 20:42:28
+ */
 @Data
 @Entity
 @Table(name = "category_brand")

@@ -11,7 +11,7 @@ import java.util.Date;
 
 /**
  * <p>
- * Pref
+ * Preferential Price
  * </p>
  *
  * @author yanglin

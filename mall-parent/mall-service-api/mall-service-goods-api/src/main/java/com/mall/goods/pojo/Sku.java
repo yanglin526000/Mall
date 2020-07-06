@@ -31,7 +31,7 @@ public class Sku extends CommonPo {
     private Integer num;
 
     @Column(name = "alert_num")
-    private Integer alertNum;//库存预警数量
+    private Integer alertNum; //库存预警数量
 
     @Column(name = "image")
     private String image;
