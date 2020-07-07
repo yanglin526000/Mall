@@ -27,10 +27,10 @@ public final class ParamUtil {
      * @author yanglin
      * @date 2020-06-22 18:56:18
      */
-    public static void putField(Object o, String fieldName, Object fieldValue) {
+    public static Object putField(Object o, String fieldName, Object fieldValue) {
         // Null value handle
         if (o == null || fieldValue == null) {
-            return;
+            return null;
         }
         try {
             Field f = null;
@@ -65,9 +65,11 @@ public final class ParamUtil {
                     f.set(o, fv);
                 }
             }
+            return o;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -221,7 +223,7 @@ public final class ParamUtil {
      */
     public static Object getCustomConstructor(Class c) {
         try {
-            return c.getDeclaredConstructor().newInstance();
+            return ParamUtil.putField(c.getDeclaredConstructor().newInstance(), "id", SnowflakeIdWorker.nextIdString());
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

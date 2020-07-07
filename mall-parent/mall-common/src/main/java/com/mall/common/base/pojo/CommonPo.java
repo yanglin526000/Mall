@@ -6,7 +6,9 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import java.util.Date;
 
 /**
@@ -23,9 +25,8 @@ public class CommonPo {
 
     @ApiModelProperty(hidden = true)
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", columnDefinition = "INT UNSIGNED")
-    private Long id;
+    @Column(name = "id")
+    private String id;
 
     @ApiModelProperty(example = "Name")
     @Column(name = "name")
