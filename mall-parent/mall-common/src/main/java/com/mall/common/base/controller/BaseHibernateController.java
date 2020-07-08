@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -153,6 +154,22 @@ public abstract class BaseHibernateController<T> {
         Map<String, Object> r = baseHibernateService.listAccurate(t, PageRequest.of(page, size));
         result.put("data", r.get("list"));
         result.put("pageInfo", r.get("pageInfo"));
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * <p>
+     * Batch Add
+     * </p>
+     *
+     * @param t
+     * @return org.springframework.http.ResponseEntity<java.lang.Object>
+     * @author yanglin
+     * @date 2020-07-08 17:58:39
+     */
+    @PostMapping("batchAdd")
+    public ResponseEntity<List<T>> batchAdd(@RequestBody List<T> t) {
+        List<T> result = baseHibernateService.batchAdd(t);
         return ResponseEntity.ok(result);
     }
 

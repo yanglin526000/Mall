@@ -20,10 +20,10 @@ import javax.persistence.Table;
 @Table(name = "category_brand")
 public class CategoryBrand extends CommonPo {
 
-    @Column(name = "category_id")
-    private Integer categoryId;
+    @Column(name = "category_id", nullable = false)
+    private String categoryId;
 
-    @Column(name = "brand_id")
-    private Integer brandId;
+    @Column(name = "brand_id", nullable = false)
+    private String brandId;
 
 }

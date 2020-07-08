@@ -1,11 +1,14 @@
 package com.mall.goods.pojo;
 
 import com.mall.common.base.pojo.CommonPo;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -34,5 +37,14 @@ public class Category extends CommonPo {
 
     @Column(name = "template_id")
     private Integer templateId;
+
+    @ApiModelProperty(hidden = true)
+    @NotFound(action = NotFoundAction.IGNORE)
+    @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+    @JoinTable(name = "category_brand",
+            inverseJoinColumns = {@JoinColumn(name = "brand_id", referencedColumnName = "id")},
+            joinColumns = {@JoinColumn(name = "category_id", referencedColumnName = "id")}
+    )
+    private List<Brand> brandList = new ArrayList<>();
 
 }

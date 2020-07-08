@@ -4,6 +4,7 @@ import com.mall.common.base.service.BaseHibernateService;
 import com.mall.common.utils.ConstantUtil;
 import com.mall.common.utils.ParamUtil;
 import com.mall.common.utils.ResultMap;
+import com.mall.common.utils.SnowflakeIdWorker;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -128,5 +129,16 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
                 Integer.parseInt(ConstantUtil.DEFAULT_PAGE_SIZE)
         );
         return listAccurate(t, pageable);
+    }
+
+
+    @Transactional
+    @Override
+    public List<T> batchAdd(List<T> t) {
+        for (T o : t) {
+            ParamUtil.putField(o, "id", SnowflakeIdWorker.nextIdString());
+            entityManager.persist(o);
+        }
+        return t;
     }
 }

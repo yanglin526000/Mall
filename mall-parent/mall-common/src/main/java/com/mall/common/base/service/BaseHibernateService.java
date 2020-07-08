@@ -2,6 +2,7 @@ package com.mall.common.base.service;
 
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -102,4 +103,16 @@ public interface BaseHibernateService<T> {
      * @author yanglin
      */
     Map<String, Object> listAccurate(T t);
+
+    /**
+     * <p>
+     * Batch Add
+     * </p>
+     *
+     * @param t List<T>
+     * @return java.util.List<T>
+     * @author yanglin
+     * @date 2020-07-08 18:03:06
+     */
+    List<T> batchAdd(List<T> t);
 }
