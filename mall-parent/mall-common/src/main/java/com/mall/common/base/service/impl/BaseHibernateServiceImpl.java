@@ -141,4 +141,25 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
         }
         return t;
     }
+
+    @Transactional
+    @Override
+    public void deleteByCond(T t) {
+        String simName = t.getClass().getSimpleName();
+        String sqlCondition = " WHERE 1 <> 1 OR ";
+        List<Field> fs = ParamUtil.getSelfAndSuperClassFields(t);
+        for (int i = 0, size = fs.size(); i < size; i++) {
+            Field f = fs.get(i);
+            Object fieldValue = ParamUtil.getField(t, f);
+            if (fieldValue != null && !"".equals(fieldValue.toString().trim())) {
+                if (sqlCondition.endsWith("OR ")) {
+                    sqlCondition += simName + "." + f.getName() + "='" + fieldValue + "'";
+                } else {
+                    sqlCondition += " AND " + simName + "." + f.getName() + "='" + fieldValue + "'";
+                }
+
+            }
+        }
+        entityManager.createQuery("DELETE FROM " + simName + " AS " + simName + sqlCondition).executeUpdate();
+    }
 }

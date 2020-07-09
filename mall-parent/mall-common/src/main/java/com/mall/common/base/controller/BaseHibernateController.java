@@ -173,4 +173,20 @@ public abstract class BaseHibernateController<T> {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * <p>
+     * Delete By Cond
+     * </p>
+     *
+     * @param t
+     * @return org.springframework.http.ResponseEntity<java.lang.Object>
+     * @author yanglin
+     * @date 2020-07-08 17:58:39
+     */
+    @DeleteMapping("deleteByCond")
+    public ResponseEntity<List<T>> deleteByCond(@RequestBody T t) {
+        baseHibernateService.deleteByCond(t);
+        return ResponseEntity.ok(null);
+    }
+
 }

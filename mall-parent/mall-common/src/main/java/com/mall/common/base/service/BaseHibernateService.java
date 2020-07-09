@@ -115,4 +115,16 @@ public interface BaseHibernateService<T> {
      * @date 2020-07-08 18:03:06
      */
     List<T> batchAdd(List<T> t);
+
+    /**
+     * <p>
+     * Delete By Cond
+     * </p>
+     *
+     * @param t T
+     * @return java.util.List<T>
+     * @author yanglin
+     * @date 2020-07-08 22:35:26
+     */
+    void deleteByCond(T t);
 }
