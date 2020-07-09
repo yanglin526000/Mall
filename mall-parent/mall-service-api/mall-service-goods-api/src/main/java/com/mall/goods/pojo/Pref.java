@@ -22,8 +22,8 @@ import java.util.Date;
 @Table(name = "pref")
 public class Pref extends CommonPo {
 
-    @Column(name = "cate_id")
-    private Integer cateId;
+    @Column(name = "category_id")
+    private String categoryId;
 
     @Column(name = "buy_money")
     private BigDecimal buyMoney;

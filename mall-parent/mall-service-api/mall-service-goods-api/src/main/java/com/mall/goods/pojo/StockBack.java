@@ -25,7 +25,7 @@ public class StockBack extends CommonPo {
     private String orderId; //订单id
 
     @Column(name = "num")
-    private Long num; //回滚数量
+    private Integer num; //回滚数量
 
     @Column(name = "status")
     private Byte status; //回滚状态

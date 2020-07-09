@@ -22,10 +22,10 @@ import java.util.Date;
 public class UndoLog extends CommonPo {
 
     @Column(name = "branch_id")
-    private Long branchId;
+    private String branchId;
 
     @Column(name = "xid")
-    private Long xid;
+    private String xid;
 
     @Column(name = "rollback_info")
     private String rollbackInfo;

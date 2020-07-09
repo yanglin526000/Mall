@@ -26,5 +26,4 @@ public class Template extends CommonPo {
     @Column(name = "para_num")
     private Integer paraNum; //参数数量
 
-
 }

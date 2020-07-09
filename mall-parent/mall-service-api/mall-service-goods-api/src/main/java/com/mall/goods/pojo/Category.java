@@ -7,7 +7,6 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,18 +32,24 @@ public class Category extends CommonPo {
     private String isMenu;
 
     @Column(name = "parent_id")
-    private Integer parentId;
+    private String parentId;
 
     @Column(name = "template_id")
-    private Integer templateId;
+    private String templateId;
 
     @ApiModelProperty(hidden = true)
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.REFRESH)
+    @JoinColumn(name = "template_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private Template template;
+
+    @ApiModelProperty(hidden = true)
+    @NotFound(action = NotFoundAction.IGNORE)
+    @OneToMany(cascade = CascadeType.REFRESH)
     @JoinTable(name = "category_brand",
             inverseJoinColumns = {@JoinColumn(name = "brand_id", referencedColumnName = "id")},
             joinColumns = {@JoinColumn(name = "category_id", referencedColumnName = "id")}
     )
-    private List<Brand> brandList = new ArrayList<>();
+    private List<Brand> brandList;
 
 }

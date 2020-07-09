@@ -24,6 +24,6 @@ public class Parameter extends CommonPo {
     private String options;
 
     @Column(name = "template_id")
-    private Integer templateId;
+    private String templateId;
 
 }

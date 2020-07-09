@@ -24,6 +24,6 @@ public class Specification extends CommonPo {
     private String options; //规格选项
 
     @Column(name = "template_id")
-    private Long templateId; //模板ID
+    private String templateId; //模板ID
 
 }

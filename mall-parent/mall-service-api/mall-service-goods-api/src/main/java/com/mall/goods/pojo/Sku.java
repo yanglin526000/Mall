@@ -43,10 +43,10 @@ public class Sku extends CommonPo {
     private Integer weight;
 
     @Column(name = "spu_id")
-    private Long spuId;
+    private String spuId;
 
     @Column(name = "category_id")
-    private Long categoryId;
+    private String categoryId;
 
     @Column(name = "category_name")
     private String categoryName;

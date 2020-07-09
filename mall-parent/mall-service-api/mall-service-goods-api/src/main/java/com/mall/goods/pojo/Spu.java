@@ -30,19 +30,19 @@ public class Spu extends CommonPo {
     private Long brandId; //品牌ID
 
     @Column(name = "category1_id")
-    private Long category1Id; //一级分类
+    private String category1Id; //一级分类
 
     @Column(name = "category2_id")
-    private Long category2Id; //二级分类
+    private String category2Id; //二级分类
 
     @Column(name = "category3_id")
-    private Long category3Id; //三级分类
+    private String category3Id; //三级分类
 
     @Column(name = "template_id")
-    private Long templateId; //模板ID
+    private String templateId; //模板ID
 
     @Column(name = "freight_id")
-    private Long freightId; //运费模板id
+    private String freightId; //运费模板id
 
     @Column(name = "image")
     private String image; //图片
