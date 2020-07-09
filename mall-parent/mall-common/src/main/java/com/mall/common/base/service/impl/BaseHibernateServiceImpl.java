@@ -68,7 +68,7 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
         Map<String, Object> result = new HashMap<>(ConstantUtil.RESULT_MAP_INIT_COUNT);
         // 设置条件
         String simName = t.getClass().getSimpleName();
-        StringBuilder sqlCondition = new StringBuilder(" WHERE 1 = 1");
+        StringBuilder sqlCondition = new StringBuilder(" WHERE 1 = 1 ");
         StringBuilder sqlSort = new StringBuilder(" ORDER BY " + simName + ".id DESC ");
         List<Field> fs = ParamUtil.getSelfAndSuperClassFields(t);
         for (Field f : fs) {
@@ -81,6 +81,7 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
                 }
             }
         }
+        sqlCondition.append(" AND ").append(simName).append(".").append("isDelete").append("=").append(ConstantUtil.IS_NOT_DELETE).append(" ");
         // 查询列表
         Query queryList = entityManager.createQuery("FROM " + simName + " AS " + simName + sqlCondition + sqlSort);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize());
@@ -109,6 +110,7 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
                 sqlCondition.append(" AND " + simName + "." + f.getName() + "='" + fieldValue + "'");
             }
         }
+        sqlCondition.append(" AND ").append(simName).append(".").append("isDelete").append("=").append(ConstantUtil.IS_NOT_DELETE).append(" ");
         // 查询列表
         Query queryList = entityManager.createQuery("FROM " + simName + " AS " + simName + sqlCondition + sqlSort);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize());
@@ -137,6 +139,7 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
     public List<T> batchAdd(List<T> t) {
         for (T o : t) {
             ParamUtil.putField(o, "id", SnowflakeIdWorker.nextIdString());
+            ParamUtil.putField(o, "isDelete", ConstantUtil.IS_NOT_DELETE);
             entityManager.persist(o);
         }
         return t;

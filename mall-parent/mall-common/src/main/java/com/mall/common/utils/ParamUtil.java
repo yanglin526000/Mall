@@ -223,7 +223,10 @@ public final class ParamUtil {
      */
     public static Object getCustomConstructor(Class c) {
         try {
-            return ParamUtil.putField(c.getDeclaredConstructor().newInstance(), "id", SnowflakeIdWorker.nextIdString());
+            Object o = c.getDeclaredConstructor().newInstance();
+            ParamUtil.putField(o, "id", SnowflakeIdWorker.nextIdString());
+            ParamUtil.putField(o, "isDelete", ConstantUtil.IS_NOT_DELETE);
+            return o;
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

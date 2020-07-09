@@ -1,6 +1,5 @@
 package com.mall.common.base.pojo;
 
-import com.mall.common.utils.ConstantUtil;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -60,6 +59,6 @@ public class CommonPo {
 
     @ApiModelProperty(hidden = true)
     @Column(name = "is_delete", columnDefinition = "TINYINT(2)", nullable = false)
-    private Byte isDelete = ConstantUtil.IS_NOT_DELETE;
+    private Byte isDelete;
 
 }
