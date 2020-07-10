@@ -2,10 +2,12 @@ package com.mall.goods.pojo;
 
 import com.mall.common.base.pojo.CommonPo;
 import lombok.Data;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -76,5 +78,10 @@ public class Spu extends CommonPo {
 
     @Column(name = "status")
     private Byte status; //审核状态
+
+    @NotFound(action = NotFoundAction.IGNORE)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "spu_id", referencedColumnName = "id")
+    private List<Sku> skuList = new ArrayList<>();
 
 }

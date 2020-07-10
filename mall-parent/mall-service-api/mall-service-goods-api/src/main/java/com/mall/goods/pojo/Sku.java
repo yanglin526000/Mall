@@ -1,6 +1,7 @@
 package com.mall.goods.pojo;
 
 import com.mall.common.base.pojo.CommonPo;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -42,6 +43,7 @@ public class Sku extends CommonPo {
     @Column(name = "weight")
     private Integer weight;
 
+    @ApiModelProperty(hidden = true)
     @Column(name = "spu_id")
     private String spuId;
 

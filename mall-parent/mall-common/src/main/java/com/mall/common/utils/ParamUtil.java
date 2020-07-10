@@ -200,7 +200,7 @@ public final class ParamUtil {
      * @author yanglin
      * @date 2020-06-24 23:45:06
      */
-    public static void putValuesToObject(Object from, Object to) {
+    public static Object putValuesToObject(Object from, Object to) {
         for (Field f : getSelfAndSuperClassFields(from)) {
             f.setAccessible(true);
             try {
@@ -209,6 +209,7 @@ public final class ParamUtil {
                 e.printStackTrace();
             }
         }
+        return to;
     }
 
     /**
@@ -223,10 +224,7 @@ public final class ParamUtil {
      */
     public static Object getCustomConstructor(Class c) {
         try {
-            Object o = c.getDeclaredConstructor().newInstance();
-            ParamUtil.putField(o, "id", SnowflakeIdWorker.nextIdString());
-            ParamUtil.putField(o, "isDelete", ConstantUtil.IS_NOT_DELETE);
-            return o;
+            return c.getDeclaredConstructor().newInstance();
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

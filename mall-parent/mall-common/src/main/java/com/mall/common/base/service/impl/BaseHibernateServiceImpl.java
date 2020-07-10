@@ -4,7 +4,6 @@ import com.mall.common.base.service.BaseHibernateService;
 import com.mall.common.utils.ConstantUtil;
 import com.mall.common.utils.ParamUtil;
 import com.mall.common.utils.ResultMap;
-import com.mall.common.utils.SnowflakeIdWorker;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -40,9 +39,9 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
     @Override
     public T save(T t) {
         Object idO = ParamUtil.getField(t, "id");
-        Object o = idO == null ? ParamUtil.getCustomConstructor(t.getClass()) : entityManager.find(t.getClass(), idO);
-        ParamUtil.putValuesToObject(t, o);
-        return (T) entityManager.merge((T) o.getClass().cast(o));
+        Object o = entityManager.find(t.getClass(), idO);
+        o = o == null ? t : ParamUtil.putValuesToObject(t, o);
+        return (T) entityManager.merge(o);
     }
 
     @SuppressWarnings({"unchecked"})
@@ -138,8 +137,6 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
     @Override
     public List<T> batchAdd(List<T> t) {
         for (T o : t) {
-            ParamUtil.putField(o, "id", SnowflakeIdWorker.nextIdString());
-            ParamUtil.putField(o, "isDelete", ConstantUtil.IS_NOT_DELETE);
             entityManager.persist(o);
         }
         return t;
