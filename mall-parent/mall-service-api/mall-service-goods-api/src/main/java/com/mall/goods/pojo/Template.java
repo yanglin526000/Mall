@@ -25,6 +25,13 @@ public class Template extends CommonPo {
     @Column(name = "spec_num")
     private Integer specNum; //规格数量
 
+    @ApiModelProperty(hidden = true)
+    @NotFound(action = NotFoundAction.IGNORE)
+    @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+    @JoinColumn(name = "template_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private List<Specification> specificationList;
+
+
     @Column(name = "para_num")
     private Integer paraNum; //参数数量
 
@@ -32,6 +39,5 @@ public class Template extends CommonPo {
     @NotFound(action = NotFoundAction.IGNORE)
     @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
     @JoinColumn(name = "template_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private List<Specification> specificationList;
-
+    private List<Parameter> parameterList;
 }
