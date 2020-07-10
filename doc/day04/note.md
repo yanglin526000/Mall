@@ -1,224 +1,1125 @@
-# 第3章 商品发布
+# 第4章 lua、Canal实现广告缓存
 
-## 学习目标
+# 学习目标
 
-- SPU与SKU概念理解
-
-  ```
-  SPU：某一款商品的公共属性
-  SKU:某款商品的不同参数对应的商品信息[某个商品]
-  ```
-
-- ==新增商品、修改商品==
+- Lua介绍
 
   ```
-  增加：增加SPU和SKU
-  修改：修改SPU和SKU
+  Lua语法 输出、变量定义、数据类型、流程控制(if..)、循环操作、函数、表(数组)、模块
   ```
 
-- 商品审核、上架、下架
+- OpenResty介绍(理解配置)
 
   ```
-  审核：修改审核状态
-  上架下架：修改上架下架状态
+  封装了Nginx，并且提供了Lua扩展，大大提升了Nginx对并发处理的能，10K-1000K
+  Lua->广告缓存操作
   ```
 
-- 删除商品
+- 广告缓存载入与读取
+
+- Nginx讲解
 
   ```
-  逻辑删除：修改了删除状态
-  物理删除：真实删除了数据
+  限流操作:漏斗限流原理
+  	1.控制速率
+  	2.并发量控制
   ```
 
-- 找回商品
+- Canal讲解
 
   ```
-  找回商品：一定是属于逻辑删除的商品
+  实现数据同步操作->MySQL
   ```
 
+- Canal实现首页缓存同步
 
 
 
-## 1 SPU与SKU
-
-### 1.1 SPU与SKU概念
-
-**SPU = Standard Product Unit  （标准产品单位）**
-
-* 概念 : SPU 是商品信息聚合的最小单位，是一组可复用、易检索的标准化信息的集合，该集合描述了一个产品的特性。
-
-* 通俗点讲，属性值、特性相同的货品就可以称为一个 SPU
-
-  ==同款商品的公共属性抽取==
 
 
+## 1 首页分析
 
-  例如：**华为P30 就是一个 SPU**
+首页门户系统需要展示各种各样的广告数据。如图，以jd为例：
 
-**SKU=stock keeping unit( 库存量单位)**
+![1560735844503](images\1560735844503.png)
 
-* SKU 即库存进出计量的单位， 可以是以件、盒、托盘等为单位。
+变更频率低的数据，如何提升访问速度？
 
-* SKU 是物理上不可分割的最小存货单元。在使用时要根据不同业态，不同管理模式来处理。
-
-* 在服装、鞋类商品中使用最多最普遍。
-
-  例如：**华为P30 红色 64G 就是一个 SKU**
-
-  ==某个库存单位的商品独有属性(某个商品的独有属性)==
+```
+1.数据做成静态页[商品详情页]
+2.做缓存[Redis]
+```
 
 
 
-### 1.2 表结构分析
+基本的思路如下：
 
-tb_spu  表 （SPU表）
+![1560736222654](images\1560736222654.png)
 
-| 字段名称           | 字段含义   | 字段类型    | 字段长度 | 备注   |
-| -------------- | ------ | ------- | ---- | ---- |
-| id             | 主键     | BIGINT  |      |      |
-| sn             | 货号     | VARCHAR |      |      |
-| name           | SPU名   | VARCHAR |      |      |
-| caption        | 副标题    | VARCHAR |      |      |
-| brand_id       | 品牌ID   | INT     |      |      |
-| category1_id   | 一级分类   | INT     |      |      |
-| category2_id   | 二级分类   | INT     |      |      |
-| category3_id   | 三级分类   | INT     |      |      |
-| template_id    | 模板ID   | INT     |      |      |
-| freight_id     | 运费模板id | INT     |      |      |
-| image          | 图片     | VARCHAR |      |      |
-| images         | 图片列表   | VARCHAR |      |      |
-| sale_service   | 售后服务   | VARCHAR |      |      |
-| introduction   | 介绍     | TEXT    |      |      |
-| spec_items     | 规格列表   | VARCHAR |      |      |
-| para_items     | 参数列表   | VARCHAR |      |      |
-| sale_num       | 销量     | INT     |      |      |
-| comment_num    | 评论数    | INT     |      |      |
-| is_marketable  | 是否上架   | CHAR    |      |      |
-| is_enable_spec | 是否启用规格 | CHAR    |      |      |
-| is_delete      | 是否删除   | CHAR    |      |      |
-| status         | 审核状态   | CHAR    |      |      |
+如上图此种方式 简单，直接通过数据库查询数据展示给用户即可，但是通常情况下，首页（门户系统的流量一般非常的高）不适合直接通过mysql数据库直接访问的方式来获取展示。
 
-tb_sku  表（SKU商品表）
+如下思路：
 
-| 字段名称          | 字段含义                | 字段类型     | 字段长度 | 备注   |
-| ------------- | ------------------- | -------- | ---- | ---- |
-| id            | 商品id                | BIGINT   |      |      |
-| sn            | 商品条码                | VARCHAR  |      |      |
-| name          | SKU名称               | VARCHAR  |      |      |
-| price         | 价格（分）               | INT      |      |      |
-| num           | 库存数量                | INT      |      |      |
-| alert_num     | 库存预警数量              | INT      |      |      |
-| image         | 商品图片                | VARCHAR  |      |      |
-| images        | 商品图片列表              | VARCHAR  |      |      |
-| weight        | 重量（克）               | INT      |      |      |
-| create_time   | 创建时间                | DATETIME |      |      |
-| update_time   | 更新时间                | DATETIME |      |      |
-| spu_id        | SPUID               | BIGINT   |      |      |
-| category_id   | 类目ID                | INT      |      |      |
-| category_name | 类目名称                | VARCHAR  |      |      |
-| brand_name    | 品牌名称                | VARCHAR  |      |      |
-| spec          | 规格                  | VARCHAR  |      |      |
-| sale_num      | 销量                  | INT      |      |      |
-| comment_num   | 评论数                 | INT      |      |      |
-| status        | 商品状态 1-正常，2-下架，3-删除 | CHAR     |      |      |
+1.首先访问nginx ，我们可以采用缓存的方式，先从nginx本地缓存中获取，获取到直接响应
+
+2.如果没有获取到，再次访问redis，我们可以从redis中获取数据，如果有 则返回，并缓存到nginx中
+
+3.如果没有获取到,再次访问mysql,我们从mysql中获取数据，再将数据存储到redis中，返回。
+
+而这里面，我们都可以使用LUA脚本嵌入到程序中执行这些查询相关的业务。
+
+![1560738068753](images\1560738068753.png)
 
 
 
-## 2 新增和修改商品 
-
-### 2.1 需求分析 
-
-实现商品的新增与修改功能。
-
-(1)第1个步骤，先选择添加的商品所属分类
-
-![1559293971522](image/1559293971522.png)
-
-这块在第2天的代码中已经有一个根据父节点ID查询分类信息的方法，参考第2天的4.3.4的findByPrantId方法，首先查询顶级分类，也就是pid=0，然后根据用户选择的分类，将选择的分类作为pid查询子分类。
 
 
+## 2 Lua(了解)
 
-（2)第2个步骤，填写SPU的信息
+### 2.1 lua是什么
 
-![1559294046675](image/1559294046675.png)
+Lua [1]  是一个小巧的[脚本语言](https://baike.baidu.com/item/%E8%84%9A%E6%9C%AC%E8%AF%AD%E8%A8%80)。它是巴西里约热内卢天主教大学（Pontifical Catholic University of Rio de Janeiro）里的一个由Roberto Ierusalimschy、Waldemar Celes 和 Luiz Henrique de Figueiredo三人所组成的研究小组于1993年开发的。 其设计目的是为了通过灵活嵌入应用程序中从而为应用程序提供灵活的扩展和定制功能。Lua由标准C编写而成，几乎在所有操作系统和平台上都可以编译，运行。Lua并没有提供强大的库，这是由它的定位决定的。所以Lua不适合作为开发独立应用程序的语言。Lua 有一个同时进行的JIT项目，提供在特定平台上的即时编译功能。
 
-(3)第3个步骤，填写SKU信息
+简单来说：
 
-![1559294162036](image/1559294162036.png)
-
-先进入选择商品分类 再填写商品的信息 填写商品的属性添加商品。
+Lua 是一种轻量小巧的脚本语言，用标准C语言编写并以源代码形式开放， 其设计目的是为了嵌入应用程序中，从而为应用程序提供灵活的扩展和定制功能。
 
 
 
-### 2.2 实现思路 
+### 2.2 特性
 
-前端传递给后端的数据格式 是一个spu对象和sku列表组成的对象,如下图:
+- 支持面向过程(procedure-oriented)编程和函数式编程(functional programming)；
+- 自动内存管理；只提供了一种通用类型的表（table），用它可以实现数组，哈希表，集合，对象；
+- 语言内置模式匹配；闭包(closure)；函数也可以看做一个值；提供多线程（协同进程，并非操作系统所支持的线程）支持；
+- 通过闭包和table可以很方便地支持面向对象编程所需要的一些关键机制，比如数据抽象，虚函数，继承和重载等。
 
-![1560601796032](image\1560601796032.png)
 
-上图JSON数据如下：
 
-```json
-{
-  "spu": {
-    "name": "这个是商品名称",
-    "caption": "这个是副标题",
-    "brandId": 12,
-    "category1Id": 558,
-    "category2Id": 559,
-    "category3Id": 560,
-    "freightId": 10,
-    "image": "http://www.qingcheng.com/image/1.jpg",
-    "images": "http://www.qingcheng.com/image/1.jpg,http://www.qingcheng.com/image/2.jpg",
-    "introduction": "这个是商品详情，html代码",
-    "paraItems": {
-      "出厂年份": "2019",
-      "赠品": "充电器"
-    },
-    "saleService": "七天包退,闪电退货",
-    "sn": "020102331",
-    "specItems": {
-      "颜色": [
-        "红",
-        "绿"
-      ],
-      "机身内存": [
-        "64G",
-        "8G"
-      ]
-    },
-    "templateId": 42
-  },
-  "skuList": [
-    {
-      "sn": "10192010292",
-      "num": 100,
-      "alertNum": 20,
-      "price": 900000,
-      "spec": {
-        "颜色": "红",
-        "机身内存": "64G"
-      },
-      "image": "http://www.qingcheng.com/image/1.jpg",
-      "images": "http://www.qingcheng.com/image/1.jpg,http://www.qingcheng.com/image/2.jpg",
-      "status": "1",
-      "weight": 130
-    },
-    {
-      "sn": "10192010293",
-      "num": 100,
-      "alertNum": 20,
-      "price": 600000,
-      "spec": {
-        "颜色": "绿",
-        "机身内存": "8G"
-      },
-      "image": "http://www.qingcheng.com/image/1.jpg",
-      "images": "http://www.qingcheng.com/image/1.jpg,http://www.qingcheng.com/image/2.jpg",
-      "status": "1",
-      "weight": 130
+### 2.3 应用场景
+
+- 游戏开发
+- 独立应用脚本
+- Web 应用脚本
+- 扩展和数据库插件如：MySQL Proxy 和 MySQL WorkBench
+- 安全系统，如入侵检测系统
+- redis中嵌套调用实现类似事务的功能
+- web容器中应用处理一些过滤 缓存等等的逻辑，例如nginx。
+
+
+
+### 2.4 lua的安装
+
+有linux版本的安装也有mac版本的安装。。我们采用linux版本的安装，首先我们准备一个linux虚拟机。
+
+安装步骤,在linux系统中执行下面的命令。
+
+```properties
+curl -R -O http://www.lua.org/ftp/lua-5.3.5.tar.gz
+tar zxf lua-5.3.5.tar.gz
+cd lua-5.3.5
+make linux test
+```
+
+注意：此时安装，有可能会出现如下错误：
+
+![1560739143890](images\1560739143890.png)
+
+此时需要安装lua相关依赖库的支持，执行如下命令即可：
+
+```properties
+yum install libtermcap-devel ncurses-devel libevent-devel readline-devel
+```
+
+此时再执行lua测试看lua是否安装成功
+
+```properties
+[root@localhost ~]# lua
+Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio
+```
+
+
+
+### 2.5 入门程序
+
+创建hello.lua文件，内容为
+
+编辑文件hello.lua
+
+```
+vi hello.lua
+```
+
+在文件中输入：
+
+```
+print("hello");
+```
+
+保存并退出。
+
+执行命令
+
+```
+lua hello.lua
+```
+
+输出为：
+
+```
+Hello
+```
+
+效果如下：
+
+![1564436327870](images\1564436327870.png)
+
+
+
+
+
+### 2.6 LUA的基本语法(了解)
+
+lua有交互式编程和脚本式编程。
+
+交互式编程就是直接输入语法，就能执行。
+
+脚本式编程需要编写脚本，然后再执行命令 执行脚本才可以。
+
+一般采用脚本式编程。（例如：编写一个hello.lua的文件，输入文件内容，并执行lua hell.lua即可）
+
+(1)交互式编程
+
+Lua 提供了交互式编程模式。我们可以在命令行中输入程序并立即查看效果。
+
+Lua 交互式编程模式可以通过命令 lua -i 或 lua 来启用：
+
+```
+lua -i
+```
+
+如下图：
+
+![1564436436450](images\1564436436450.png)
+
+
+
+(2)脚本式编程
+
+我们可以将 Lua 程序代码保持到一个以 lua 结尾的文件，并执行，该模式称为脚本式编程，例如上面入门程序中将lua语法写到hello.lua文件中。
+
+
+
+#### 2.6.1 注释
+
+一行注释：两个减号是单行注释:
+
+```
+--
+```
+
+多行注释：
+
+```lua
+--[[
+ 多行注释
+ 多行注释
+ --]]
+```
+
+
+
+#### 2.6.2 定义变量
+
+全局变量，默认的情况下，定义一个变量都是全局变量，
+
+如果要用局部变量 需要声明为local.例如：
+
+```lua
+-- 全局变量赋值
+a=1
+-- 局部变量赋值
+local b=2 
+```
+
+如果变量没有初始化：则 它的值为nil 这和java中的null不同。
+
+如下图案例：
+
+![1564436763084](images\1564436763084.png)
+
+
+
+#### 2.6.3 Lua中的数据类型
+
+Lua 是动态类型语言，变量不要类型定义,只需要为变量赋值。 值可以存储在变量中，作为参数传递或结果返回。
+
+Lua 中有 8 个基本类型分别为：nil、boolean、number、string、userdata、function、thread 和 table。
+
+| 数据类型 | 描述                                                         |
+| -------- | ------------------------------------------------------------ |
+| nil      | 这个最简单，只有值nil属于该类，表示一个无效值（在条件表达式中相当于false）。 |
+| boolean  | 包含两个值：false和true。                                    |
+| number   | 表示双精度类型的实浮点数                                     |
+| string   | 字符串由一对双引号或单引号来表示                             |
+| function | 由 C 或 Lua 编写的函数                                       |
+| userdata | 表示任意存储在变量中的C数据结构                              |
+| thread   | 表示执行的独立线路，用于执行协同程序                         |
+| table    | Lua 中的表（table）其实是一个"关联数组"（associative arrays），数组的索引可以是数字、字符串或表类型。在 Lua 里，table 的创建是通过"构造表达式"来完成，最简单构造表达式是{}，用来创建一个空表。 |
+
+实例：
+
+```properties
+print(type("Hello world"))      --> string
+print(type(10.4*3))             --> number
+print(type(print))              --> function
+print(type(type))               --> function
+print(type(true))               --> boolean
+print(type(nil))                --> nil
+```
+
+
+
+
+
+#### 2.6.4 流程控制
+
+(1)if语句
+
+Lua **if 语句** 由一个布尔表达式作为条件判断，其后紧跟其他语句组成。
+
+语法：
+
+```properties
+if(布尔表达式)
+then
+   --[ 在布尔表达式为 true 时执行的语句 --]
+end
+```
+
+实例：
+
+![1564437016055](images\1564437016055.png)
+
+
+
+(2)if..else语句
+
+Lua if 语句可以与 else 语句搭配使用, 在 if 条件表达式为 false 时执行 else 语句代码块。
+
+语法：
+
+```properties
+if(布尔表达式)
+then
+   --[ 布尔表达式为 true 时执行该语句块 --]
+else
+   --[ 布尔表达式为 false 时执行该语句块 --]
+end
+```
+
+实例：
+
+![1564437356737](images\1564437356737.png)
+
+
+
+#### 2.6.5 循环
+
+学员完成
+
+(1)while循环[==满足条件就循环==]
+
+Lua 编程语言中 while 循环语句在判断条件为 true 时会重复执行循环体语句。
+语法：
+
+```properties
+while(condition)
+do
+   statements
+end
+```
+
+实例：
+
+```properties
+a=10
+while( a < 20 )
+do
+   print("a 的值为:", a)
+   a = a+1
+end
+```
+
+效果如下：
+
+![1564437466576](images\1564437466576.png)
+
+
+
+(2)for循环
+
+Lua 编程语言中 for 循环语句可以重复执行指定语句，重复次数可在 for 语句中控制。
+
+语法：  1->10  1:exp1  10:exp2  2:exp3:递增的数量   
+
+```properties
+for var=exp1,exp2,exp3 
+do  
+    <执行体>  
+end  
+```
+
+var 从 exp1 变化到 exp2，每次变化以 exp3 为步长递增 var，并执行一次 **"执行体"**。exp3 是可选的，如果不指定，默认为1。
+
+例子：
+
+```properties
+for i=1,9,2
+do
+   print(i)
+end
+```
+
+`for i=1,9,2`:i=1从1开始循环，9循环数据到9结束，2每次递增2
+
+![1564437629211](images\1564437629211.png)
+
+
+
+(3)repeat...until语句[==满足条件结束==]
+
+Lua 编程语言中 repeat...until 循环语句不同于 for 和 while循环，for 和 while 循环的条件语句在当前循环执行开始时判断，而 repeat...until 循环的条件语句在当前循环结束后判断。
+
+语法：
+
+```properties
+repeat
+   statements
+until( condition )
+```
+
+案例：
+
+![1564438640878](images\1564438640878.png)
+
+
+
+#### 2.6.6 函数
+
+lua中也可以定义函数，类似于java中的方法。例如：
+
+```lua
+--[[ 函数返回两个值的最大值 --]]
+function max(num1, num2)
+   if (num1 > num2) then
+      result = num1;
+   else
+      result = num2;
+   end
+   return result; 
+end
+-- 调用函数
+print("两值比较最大值为 ",max(10,4))
+print("两值比较最大值为 ",max(5,6))
+```
+
+执行之后的结果：
+
+```
+两值比较最大值为     10
+两值比较最大值为     6
+```
+
+
+
+..:表示拼接
+
+
+
+#### 2.6.7 表
+
+table 是 Lua 的一种数据结构用来帮助我们创建不同的数据类型，如：数组、字典等。
+
+Lua也是通过table来解决模块（module）、包（package）和对象（Object）的。
+
+案例：
+
+```properties
+-- 初始化表
+mytable = {}
+-- 指定值
+mytable[1]= "Lua"
+-- 移除引用
+mytable = nil
+```
+
+
+
+#### 2.6.7 模块
+
+(1)模块定义
+
+模块类似于一个封装库，从 Lua 5.1 开始，Lua 加入了标准的模块管理机制，可以把一些公用的代码放在一个文件里，以 API 接口的形式在其他地方调用，有利于代码的重用和降低代码耦合度。
+
+创建一个文件叫module.lua，在module.lua中创建一个独立的模块，代码如下：
+
+```properties
+-- 文件名为 module.lua
+-- 定义一个名为 module 的模块
+module = {}
+ 
+-- 定义一个常量
+module.constant = "这是一个常量"
+ 
+-- 定义一个函数
+function module.func1()
+    print("这是一个公有函数")
+end
+ 
+local function func2()
+    print("这是一个私有函数！")
+end
+ 
+function module.func3()
+    func2()
+end
+ 
+return module
+```
+
+由上可知，模块的结构就是一个 table 的结构，因此可以像操作调用 table 里的元素那样来操作调用模块里的常量或函数。
+
+上面的 func2 声明为程序块的局部变量，即表示一个私有函数，因此是不能从外部访问模块里的这个私有函数，必须通过模块里的公有函数来调用.
+
+
+
+(2)require 函数
+
+require 用于 引入其他的模块，类似于java中的类要引用别的类的效果。
+
+用法：
+
+```properties
+require("<模块名>")
+```
+
+```properties
+require "<模块名>"
+```
+
+两种都可以。
+
+我们可以将上面定义的module模块引入使用,创建一个test_module.lua文件，代码如下：
+
+```properties
+-- test_module.lua 文件
+-- module 模块为上文提到到 module.lua
+require("module")
+print(module.constant)
+module.func3()
+```
+
+
+
+
+
+## 3 OpenResty介绍
+
+OpenResty(又称：ngx_openresty) 是一个基于 nginx的可伸缩的 Web 平台，由中国人章亦春发起，提供了很多高质量的第三方模块。
+
+OpenResty 是一个强大的 Web 应用服务器，Web 开发人员可以使用 Lua 脚本语言调动 Nginx 支持的各种 C 以及 Lua 模块,更主要的是在性能方面，OpenResty可以 快速构造出足以胜任 10K 以上并发连接响应的超高性能 Web 应用系统。
+
+360，UPYUN，阿里云，新浪，腾讯网，去哪儿网，酷狗音乐等都是 OpenResty 的深度用户。
+
+OpenResty 简单理解成 就相当于封装了nginx,并且集成了LUA脚本，开发人员只需要简单的其提供了模块就可以实现相关的逻辑，而不再像之前，还需要在nginx中自己编写lua的脚本，再进行调用了。
+
+### 3.1 安装openresty
+
+linux安装openresty:
+
+1.添加仓库执行命令
+
+```shell
+ yum install yum-utils
+ yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo
+```
+
+2.执行安装
+
+```
+yum install openresty
+```
+
+3.安装成功后 会在默认的目录如下：
+
+```
+/usr/local/openresty
+```
+
+
+
+### 3.2 安装nginx
+
+默认已经安装好了nginx,在目录：/usr/local/openresty/nginx 下。
+
+修改/usr/local/openresty/nginx/conf/nginx.conf,将配置文件使用的根设置为root,目的就是将来要使用lua脚本的时候 ，直接可以加载在root下的lua脚本。
+
+```
+cd /usr/local/openresty/nginx/conf
+vi nginx.conf
+```
+
+修改代码如下：
+
+![1560739975500](images\1560739975500.png)
+
+
+
+
+
+### 3.3 测试访问
+
+重启下centos虚拟机，然后访问测试Nginx
+
+访问地址：`http://192.168.211.132/`
+
+![1560740292872](images\1560740292872.png)
+
+
+
+## 4.广告缓存的载入与读取
+
+### 4.1 需求分析
+
+需要在页面上显示广告的信息。
+
+### 4.2 Lua+Nginx配置
+
+(1)实现思路-查询数据放入redis中
+
+实现思路：
+
+定义请求：用于查询数据库中的数据更新到redis中。
+
+a.连接mysql ，按照广告分类ID读取广告列表，转换为json字符串。
+
+b.连接redis，将广告列表json字符串存入redis 。
+
+定义请求：
+
+```
+请求：
+	/update_content
+参数：
+	id  --指定广告分类的id
+返回值：
+	json
+```
+
+请求地址：`<http://192.168.211.132/update_content?id=1>`
+
+创建/root/lua目录，在该目录下创建update_content.lua： 目的就是连接mysql  查询数据 并存储到redis中。
+
+![1560759977349](images\1560759977349.png)
+
+上图代码如下：
+
+```lua
+ngx.header.content_type="application/json;charset=utf8"
+local cjson = require("cjson")
+local mysql = require("resty.mysql")
+local uri_args = ngx.req.get_uri_args()
+local id = uri_args["id"]
+local db = mysql:new()
+db:set_timeout(1000)
+local props = {
+    host = "192.168.211.132",
+    port = 3306,
+    database = "changgou_content",
+    user = "root",
+    password = "123456"
+}
+local res = db:connect(props)
+local select_sql = "select url,pic from tb_content where status ='1' and category_id="..id.." order by sort_order"
+res = db:query(select_sql)
+db:close()
+local redis = require("resty.redis")
+local red = redis:new()
+red:set_timeout(2000)
+local ip ="192.168.211.132"
+local port = 6379
+red:connect(ip,port)
+red:set("content_"..id,cjson.encode(res))
+red:close()
+ngx.say("{flag:true}")
+```
+
+
+
+修改/usr/local/openresty/nginx/conf/nginx.conf文件： 添加头信息，和 location信息
+
+![1560741056485](images\1560741056485.png)
+
+代码如下：
+
+```nginx
+server {
+    listen       80;
+    server_name  localhost;
+    location /update_content {
+        content_by_lua_file /root/lua/update_content.lua;
     }
-  ]
+}
+```
+
+定义lua缓存命名空间，修改nginx.conf，添加如下代码即可：
+
+![1560762051330](images\1560762051330.png)
+
+代码如下：
+
+```properties
+lua_shared_dict dis_cache 128m;
+```
+
+
+
+请求`<http://192.168.211.132/update_content?id=1>`可以实现缓存的添加
+
+![1564422636804](images\1564422636804.png)
+
+
+
+(2)实现思路-从redis中获取数据
+
+实现思路：
+
+定义请求，用户根据广告分类的ID 获取广告的列表。通过lua脚本直接从redis中获取数据即可。
+
+定义请求：
+
+```
+请求:/read_content
+参数：id
+返回值：json
+```
+
+在/root/lua目录下创建read_content.lua:
+
+```lua
+--设置响应头类型
+ngx.header.content_type="application/json;charset=utf8"
+--获取请求中的参数ID
+local uri_args = ngx.req.get_uri_args();
+local id = uri_args["id"];
+--引入redis库
+local redis = require("resty.redis");
+--创建redis对象
+local red = redis:new()
+--设置超时时间
+red:set_timeout(2000)
+--连接
+local ok, err = red:connect("192.168.211.132", 6379)
+--获取key的值
+local rescontent=red:get("content_"..id)
+--输出到返回响应中
+ngx.say(rescontent)
+--关闭连接
+red:close()
+```
+
+在/usr/local/openresty/nginx/conf/nginx.conf中配置如下：
+
+如图：
+
+![1560741401873](images\1560741401873.png)
+
+代码：
+
+```nginx
+location /read_content {
+     content_by_lua_file /root/lua/read_content.lua;
+}
+```
+
+
+
+(3)加入openresty本地缓存
+
+如上的方式没有问题，但是如果请求都到redis，redis压力也很大，所以我们一般采用多级缓存的方式来减少下游系统的服务压力。参考基本思路图的实现。
+
+先查询openresty本地缓存 如果 没有
+
+再查询redis中的数据，如果没有
+
+再查询mysql中的数据，但凡有数据 则返回即可。
+
+修改read_content.lua文件，代码如下：
+
+![1560760965394](images\1560760965394.png)
+
+上图代码如下：
+
+```lua
+ngx.header.content_type="application/json;charset=utf8"
+local uri_args = ngx.req.get_uri_args();
+local id = uri_args["id"];
+--获取本地缓存
+local cache_ngx = ngx.shared.dis_cache;
+--根据ID 获取本地缓存数据
+local contentCache = cache_ngx:get('content_cache_'..id);
+if contentCache == "" or contentCache == nil then
+    local redis = require("resty.redis");
+    local red = redis:new()
+    red:set_timeout(2000)
+    red:connect("192.168.211.132", 6379)
+    local rescontent=red:get("content_"..id);
+    if ngx.null == rescontent then
+        local cjson = require("cjson");
+        local mysql = require("resty.mysql");
+        local db = mysql:new();
+        db:set_timeout(2000)
+        local props = {
+            host = "192.168.211.132",
+            port = 3306,
+            database = "changgou_content",
+            user = "root",
+            password = "123456"
+        }
+        local res = db:connect(props);
+        local select_sql = "select url,pic from tb_content where status ='1' and category_id="..id.." order by sort_order";
+        res = db:query(select_sql);
+        local responsejson = cjson.encode(res);
+        red:set("content_"..id,responsejson);
+        ngx.say(responsejson);
+        db:close()
+    else
+        cache_ngx:set('content_cache_'..id, rescontent, 10*60);
+        ngx.say(rescontent)
+    end
+    red:close()
+else
+    ngx.say(contentCache)
+end
+```
+
+
+
+测试地址：`http://192.168.211.132/update_content?id=1`
+
+此时会将分类ID=1的所有广告查询出来，并存入到Redis缓存。
+
+![1560761133343](images\1560761133343.png)
+
+测试地址：`http://192.168.211.132/read_content?id=1`
+
+此时会获取分类ID=1的所有广告信息。
+
+![1560761192634](images\1560761192634.png)
+
+
+
+## 5 nginx限流
+
+一般情况下，首页的并发量是比较大的，即使 有了多级缓存，当用户不停的刷新页面的时候，也是没有必要的，另外如果有恶意的请求 大量达到，也会对系统造成影响。
+
+而限流就是保护措施之一。
+
+
+
+### 5.1 生活中限流对比
+
++ 水坝泄洪，通过闸口限制洪水流量（控制流量速度）。
+
++ 办理银行业务：所有人先领号，各窗口叫号处理。每个窗口处理速度根据客户具体业务而定，所有人排队等待叫号即可。若快下班时，告知客户明日再来(拒绝流量)
++ 火车站排队买票安检，通过排队 的方式依次放入。（缓存带处理任务）
+
+
+
+### 5.2 nginx的限流
+
+nginx提供两种限流的方式：
+
+- 一是控制速率
+
+- 二是控制并发连接数
+
+
+
+#### 5.2.1 控制速率
+
+控制速率的方式之一就是采用漏桶算法。
+
+
+
+(1)漏桶算法实现控制速率限流
+
+漏桶(Leaky Bucket)算法思路很简单,水(请求)先进入到漏桶里,漏桶以一定的速度出水(接口有响应速率),当水流入速度过大会直接溢出(访问频率超过接口响应速率),然后就拒绝请求,可以看出漏桶算法能强行限制数据的传输速率.示意图如下:
+
+![1560774438337](images\1560774438337.png)
+
+
+
+(2)nginx的配置
+
+配置示意图如下：
+
+![1560775302161](images\1560775302161.png)
+
+
+
+修改/usr/local/openresty/nginx/conf/nginx.conf:
+
+```nginx
+user  root root;
+worker_processes  1;
+events {
+    worker_connections  1024;
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    #cache
+    lua_shared_dict dis_cache 128m;
+    #限流设置
+    limit_req_zone $binary_remote_addr zone=contentRateLimit:10m rate=2r/s;
+    sendfile        on;
+    #tcp_nopush     on;
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+    #gzip  on;
+    server {
+        listen       80;
+        server_name  localhost;
+        location /update_content {
+            content_by_lua_file /root/lua/update_content.lua;
+        }
+        location /read_content {
+            #使用限流配置
+            limit_req zone=contentRateLimit;
+            content_by_lua_file /root/lua/read_content.lua;
+        }
+    }
+}
+```
+
+配置说明：
+
+```
+binary_remote_addr 是一种key，表示基于 remote_addr(客户端IP) 来做限流，binary_ 的目的是压缩内存占用量。
+zone：定义共享内存区来存储访问信息， contentRateLimit:10m 表示一个大小为10M，名字为contentRateLimit的内存区域。1M能存储16000 IP地址的访问信息，10M可以存储16W IP地址访问信息。
+rate 用于设置最大访问速率，rate=10r/s 表示每秒最多处理10个请求。Nginx 实际上以毫秒为粒度来跟踪请求信息，因此 10r/s 实际上是限制：每100毫秒处理一个请求。这意味着，自上一个请求处理完后，若后续100毫秒内又有请求到达，将拒绝处理该请求.我们这里设置成2 方便测试。
+```
+
+测试：
+
+重新加载配置文件
+
+```properties
+cd /usr/local/openresty/nginx/sbin
+./nginx -s reload
+```
+
+访问页面：`http://192.168.211.132/read_content?id=1` ,连续刷新会直接报错。
+
+![1560775527156](images\1560775527156.png)
+
+
+
+(3)处理突发流量
+
+上面例子限制 2r/s，如果有时正常流量突然增大，超出的请求将被拒绝，无法处理突发流量，可以结合 **burst** 参数使用来解决该问题。
+
+例如，如下配置表示：
+
+![1560775792418](images\1560775792418.png)
+
+上图代码如下：
+
+```nginx
+server {
+    listen       80;
+    server_name  localhost;
+    location /update_content {
+        content_by_lua_file /root/lua/update_content.lua;
+    }
+    location /read_content {
+        limit_req zone=contentRateLimit burst=4;
+        content_by_lua_file /root/lua/read_content.lua;
+    }
+}
+```
+
+burst 译为突发、爆发，表示在超过设定的处理速率后能额外处理的请求数,当 rate=10r/s 时，将1s拆成10份，即每100ms可处理1个请求。
+
+此处，**burst=4 **，若同时有4个请求到达，Nginx 会处理第一个请求，剩余3个请求将放入队列，然后每隔500ms从队列中获取一个请求进行处理。若请求数大于4，将拒绝处理多余的请求，直接返回503.
+
+不过，单独使用 burst 参数并不实用。假设 burst=50 ，rate依然为10r/s，排队中的50个请求虽然每100ms会处理一个，但第50个请求却需要等待 50 * 100ms即 5s，这么长的处理时间自然难以接受。
+
+因此，burst 往往结合 nodelay 一起使用。
+
+例如：如下配置：
+
+```nginx
+server {
+    listen       80;
+    server_name  localhost;
+    location /update_content {
+        content_by_lua_file /root/lua/update_content.lua;
+    }
+    location /read_content {
+        limit_req zone=contentRateLimit burst=4 nodelay;
+        content_by_lua_file /root/lua/read_content.lua;
+    }
+}
+```
+
+如上表示：
+
+平均每秒允许不超过2个请求，突发不超过4个请求，并且处理突发4个请求的时候，没有延迟，等到完成之后，按照正常的速率处理。
+
+如上两种配置结合就达到了速率稳定，但突然流量也能正常处理的效果。完整配置代码如下：
+
+```nginx
+user  root root;
+worker_processes  1;
+events {
+    worker_connections  1024;
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    #cache
+    lua_shared_dict dis_cache 128m;
+    #限流设置
+    limit_req_zone $binary_remote_addr zone=contentRateLimit:10m rate=2r/s;
+    sendfile        on;
+    #tcp_nopush     on;
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+    #gzip  on;
+    server {
+        listen       80;
+        server_name  localhost;
+        location /update_content {
+            content_by_lua_file /root/lua/update_content.lua;
+        }
+        location /read_content {
+            limit_req zone=contentRateLimit burst=4 nodelay;
+            content_by_lua_file /root/lua/read_content.lua;
+        }
+    }
+}
+```
+
+
+
+测试：如下图 在1秒钟之内可以刷新4次，正常处理。
+
+![1560776119165](images\1560776119165.png)
+
+
+
+但是超过之后，连续刷新5次，抛出异常。
+
+![1560776155042](images\1560776155042.png)
+
+
+
+
+
+#### 5.2.2 控制并发量（连接数）
+
+ngx_http_limit_conn_module  提供了限制连接数的能力。主要是利用limit_conn_zone和limit_conn两个指令。
+
+利用连接数限制 某一个用户的ip连接的数量来控制流量。
+
+注意：并非所有连接都被计算在内 只有当服务器正在处理请求并且已经读取了整个请求头时，才会计算有效连接。此处忽略测试。
+
+配置语法：
+
+```
+Syntax:	limit_conn zone number;
+Default: —;
+Context: http, server, location;
+```
+
+
+
+(1)配置限制固定连接数
+
+如下，配置如下： 
+
+![1560778439935](images\1560778439935.png)
+
+上图配置如下：
+
+```nginx
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    #cache
+    lua_shared_dict dis_cache 128m;
+    #限流设置
+    limit_req_zone $binary_remote_addr zone=contentRateLimit:10m rate=2r/s;
+    #根据IP地址来限制，存储内存大小10M
+    limit_conn_zone $binary_remote_addr zone=addr:1m;
+    sendfile        on;
+    #tcp_nopush     on;
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+    #gzip  on;
+    server {
+        listen       80;
+        server_name  localhost;
+        #所有以brand开始的请求，访问本地changgou-service-goods微服务
+        location /brand {
+            limit_conn addr 2;
+            proxy_pass http://192.168.211.1:18081;
+        }
+        location /update_content {
+            content_by_lua_file /root/lua/update_content.lua;
+        }
+        location /read_content {
+            limit_req zone=contentRateLimit burst=4 nodelay;
+            content_by_lua_file /root/lua/read_content.lua;
+        }
+    }
+}
+```
+
+表示：
+
+```
+limit_conn_zone $binary_remote_addr zone=addr:10m;  表示限制根据用户的IP地址来显示，设置存储地址为的内存大小10M
+limit_conn addr 2;   表示 同一个地址只允许连接2次。
+```
+
+测试：
+
+此时开3个线程，测试的时候会发生异常，开2个就不会有异常
+
+![1560779033144](images\1560779033144.png)
+
+
+
+(2)限制每个客户端IP与服务器的连接数，同时限制与虚拟服务器的连接总数。(了解)
+
+如下配置： 
+
+```nginx
+limit_conn_zone $binary_remote_addr zone=perip:10m;
+limit_conn_zone $server_name zone=perserver:10m; 
+server {  
+    listen       80;
+    server_name  localhost;
+    charset utf-8;
+    location / {
+        limit_conn perip 10;#单个客户端ip与服务器的连接数．
+        limit_conn perserver 100; ＃限制与服务器的总连接数
+        root   html;
+        index  index.html index.htm;
+    }
 }
 ```
 
@@ -226,717 +1127,457 @@ tb_sku  表（SKU商品表）
 
 
 
-### 2.3 代码生成
+## 6 canal同步广告
 
-准备工作：为了更快的实现代码编写，我们可以采用《黑马代码生成器》来批量生成代码，这些代码就已经实现了我们之前的增删改查功能。
+canal可以用来监控数据库数据的变化，从而获得新增数据，或者修改的数据。
 
-《黑马代码生成器》一款由传智播客教育集团JavaEE教研团队开发的基于Freemarker模板引擎的“代码生成神器”。即便是一个工程几百个表，也可以瞬间完成基础代码的构建！用户只需建立数据库表结构，运行main方法就可快速生成可以运行的一整套代码，可以极大地缩短开发周期，降低人力成本。《黑马代码生成器》的诞生主要用于迅速构建生成微服务工程的Pojo、Dao、Service、Controller各层、并且可以生成swagger API模板等。 用户通过自己开发模板也可以实现生成php、python、C# 、c++、数据库存储过程等其它编程语言的代码。
+canal是应阿里巴巴存在杭州和美国的双机房部署，存在跨机房同步的业务需求而提出的。
 
-《黑马代码生成器》目前已经开源  地址：https://github.com/shenkunlin/code-template.git
-
-如下图资料,将其导入到idea中 并执行即可:
-
-![1566356486038](image/1566356486038.png)
+阿里系公司开始逐步的尝试基于数据库的日志解析，获取增量变更进行同步，由此衍生出了增量订阅&消费的业务。
 
 
 
-使用说明,简单来说如下图所示:
+### 6.1 Canal工作原理
 
-![1566356619864](image/1566356619864.png)
+![1560813843260](images\1560813843260.png)
+
+原理相对比较简单：
+
+1. canal模拟mysql slave的交互协议，伪装自己为mysql slave，向mysql master发送dump协议
+2. mysql master收到dump请求，开始推送binary log给slave(也就是canal)
+3. canal解析binary log对象(原始为byte流)
 
 
 
-### 2.4 代码实现 
+canal需要使用到mysql，我们需要先安装mysql,给大家发的虚拟机中已经安装了mysql容器，但canal是基于mysql的主从模式实现的，所以必须先开启binlog.
 
-一会儿会用到ID生成，我们可以使用IdWorker，在启动类GoodsApplication中添加如下代码,用于创建IdWorker，并将IdWorker交给Spring容器，代码如下：
 
-```java
-/***
- * IdWorker
- * @return
- */
-@Bean
-public IdWorker idWorker(){
-    return new IdWorker(0,0);
-}
+
+### 6.2 开启binlog模式
+
+先使用docker 创建mysql容器,此处不再演示.
+
+
+
+(1) 连接到mysql中,并修改/etc/mysql/mysql.conf.d/mysqld.cnf  需要开启主 从模式，开启binlog模式。
+
+执行如下命令，编辑mysql配置文件
+
+![1560814415655](images\1560814415655.png)
+
+命令行如下：
+
+```properties
+docker exec -it mysql /bin/bash
+cd /etc/mysql/mysql.conf.d
+vi mysqld.cnf
 ```
 
 
 
-#### 2.4.1 查询分类
+修改mysqld.cnf配置文件，添加如下配置：
 
-##### 2.4.1.1 分析
+![1560814236901](images\1560814236901.png)
 
-![1564377769398](image\1564377769398.png)
+上图配置如下：
 
-在实现商品增加之前，需要先选择对应的分类，选择分类的时候，首选选择一级分类，然后根据选中的分类，将选中的分类作为查询的父ID，再查询对应的子分类集合，因此我们可以在后台编写一个方法，根据父类ID查询对应的分类集合即可。
-
-
-
-##### 2.4.1.2 代码实现
-
-(1)Service层
-
-修改`com.changgou.goods.service.CategoryService`添加根据父类ID查询所有子节点，代码如下：
-
-```java
-/***
- * 根据分类的父ID查询子分类节点集合
- */
-List<Category> findByParentId(Integer pid);
-```
-
-修改`com.changgou.goods.service.impl.CategoryServiceImpl`添加上面的实现，代码如下：
-
-```java
-/***
- * 根据分类的父节点ID查询所有子节点
- * @param pid
- * @return
- */
-@Override
-public List<Category> findByParentId(Integer pid) {
-    //SELECT * FROM tb_category WHERE parent_id=?
-    Category category = new Category();
-    category.setParentId(pid);
-    return categoryMapper.select(category);
-}
+```properties
+log-bin/var/lib/mysql/mysql-bin
+server-id=12345
 ```
 
 
 
-(2)Controller层
+(2) 创建账号 用于测试使用,
 
-修改`com.changgou.goods.controller.CategoryController`添加根据父ID查询所有子类集合，代码如下：
+使用root账号创建用户并授予权限
 
-```java
-/****
- * 根据节点ID查询所有子节点分类集合
- */
-@GetMapping(value = "/list/{pid}")
-public Result<List<Category>> findByParentId(@PathVariable(value = "pid")Integer pid){
-    //调用Service实现查询
-    List<Category> categories = categoryService.findByParentId(pid);
-    return new Result<List<Category>>(true,StatusCode.OK,"查询成功！",categories);
-}
+```properties
+create user canal@'%' IDENTIFIED by 'canal';
+GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT,SUPER ON *.* TO 'canal'@'%';
+FLUSH PRIVILEGES;
+```
+
+
+
+(3)重启mysql容器
+
+```properties
+docker restart mysql
 ```
 
 
 
 
 
-#### 2.4.2 模板查询(规格参数组)
+### 6.3 canal容器安装
 
-同学作业
+下载镜像：
 
+```properties
+docker pull docker.io/canal/canal-server
+```
 
+容器安装
 
-##### 2.4.2.1 分析
+```properties
+docker run -p 11111:11111 --name canal -d docker.io/canal/canal-server
+```
 
-![1564350522922](image\qqqqqq.png)
+进入容器,修改核心配置canal.properties 和instance.properties，canal.properties 是canal自身的配置，instance.properties是需要同步数据的数据库连接配置。
 
-如上图，当用户选中了分类后，需要根据分类的ID查询出对应的模板数据，并将模板的名字显示在这里，模板表结构如下：
+执行代码如下:
 
-```sql
-CREATE TABLE `tb_template` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `name` varchar(50) DEFAULT NULL COMMENT '模板名称',
-  `spec_num` int(11) DEFAULT '0' COMMENT '规格数量',
-  `para_num` int(11) DEFAULT '0' COMMENT '参数数量',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8;
+```properties
+docker exec -it canal /bin/bash
+cd canal-server/conf/
+vi canal.properties
+cd example/
+vi instance.properties
+```
+
+修改canal.properties的id，不能和mysql的server-id重复，如下图：
+
+![1560814792482](images\1560814792482.png)
+
+修改instance.properties,配置数据库连接地址:
+
+![1560814968391](images\1560814968391.png)
+
+这里的`canal.instance.filter.regex`有多种配置，如下：
+
+可以参考地址如下:
+
+```
+https://github.com/alibaba/canal/wiki/AdminGuide
+```
+
+```properties
+mysql 数据解析关注的表，Perl正则表达式.
+多个正则之间以逗号(,)分隔，转义符需要双斜杠(\\) 
+常见例子：
+1.  所有表：.*   or  .*\\..*
+2.  canal schema下所有表： canal\\..*
+3.  canal下的以canal打头的表：canal\\.canal.*
+4.  canal schema下的一张表：canal.test1
+5.  多个规则组合使用：canal\\..*,mysql.test1,mysql.test2 (逗号分隔)
+注意：此过滤条件只针对row模式的数据有效(ps. mixed/statement因为不解析sql，所以无法准确提取tableName进行过滤)
+```
+
+配置完成后，设置开机启动，并记得重启canal。
+
+```properties
+docker update --restart=always canal
+docker restart canal
 ```
 
 
 
-##### 2.4.2.2 代码实现
+### 6.4 canal微服务搭建
 
-(1)Service层
+ 当用户执行 数据库的操作的时候，binlog 日志会被canal捕获到，并解析出数据。我们就可以将解析出来的数据进行同步到redis中即可。
 
-修改`com.changgou.goods.service.TemplateService`接口，添加如下方法根据分类ID查询模板：
+思路：创建一个独立的程序，并监控canal服务器，获取binlog日志，解析数据，将数据更新到redis中。这样广告的数据就更新了。
 
-```java
-/**
- * 根据分类ID查询模板信息
- * @param id
- * @return
- */
-Template findByCategoryId(Integer id);
+
+
+(1)安装辅助jar包
+
+在`canal\spring-boot-starter-canal-master`中有一个工程`starter-canal`，它主要提供了SpringBoot环境下`canal`的支持，我们需要先安装该工程，在`starter-canal`目录下执行`mvn install`，如下图：
+
+![1560815769342](images\1560815769342.png)
+
+
+
+(2)canal微服务工程搭建
+
+在changgou-service下创建changgou-service-canal工程，并引入相关配置。
+
+pom.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>changgou-service</artifactId>
+        <groupId>com.changgou</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>changgou-service-canal</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!--canal依赖-->
+        <dependency>
+            <groupId>com.xpand</groupId>
+            <artifactId>starter-canal</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+</project>
 ```
 
 
 
-修改`com.changgou.goods.service.impl.TemplateServiceImpl`添加上面方法的实现：
+application.yml配置
 
-```java
-@Autowired
-private CategoryMapper categoryMapper;
-/***
- * 根据分类ID查询模板信息
- * @param id
- * @return
- */
-@Override
-public Template findByCategoryId(Integer id) {
-    //查询分类信息
-    Category category = categoryMapper.selectByPrimaryKey(id);
-    //根据模板Id查询模板信息
-    return templateMapper.selectByPrimaryKey(category.getTemplateId());
-}
+```properties
+server:
+  port: 18082
+spring:
+  application:
+    name: canal
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:7001/eureka
+  instance:
+    prefer-ip-address: true
+feign:
+  hystrix:
+    enabled: true
+#hystrix 配置
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+        #如果enabled设置为false，则请求超时交给ribbon控制
+          enabled: true
+        isolation:
+          strategy: SEMAPHORE
+#canal配置
+canal:
+  client:
+    instances:
+      example:
+        host: 192.168.211.132
+        port: 11111
 ```
 
 
 
-(2)Controller层
+(3)监听创建
 
-修改`com.changgou.goods.controller.TemplateController`，添加根据分类ID查询模板数据：
-
-```java
-/***
- * 根据分类查询模板数据
- * @param id:分类ID
- */
-@GetMapping(value = "/category/{id}")
-public Result<Template> findByCategoryId(@PathVariable(value = "id")Integer id){
-    //调用Service查询
-    Template template = templateService.findByCategoryId(id);
-    return new Result<Template>(true, StatusCode.OK,"查询成功",template);
-}
-```
-
-
-
-
-
-#### 2.4.3 查询分类品牌数据
-
-##### 2.4.3.1 分析
-
-![1564378095781](image\1564378095781.png)
-
-用户每次选择了分类之后，可以根据用户选择的分类到`tb_category_brand`表中查询指定的品牌集合ID,然后根据品牌集合ID查询对应的品牌集合数据，再将品牌集合数据拿到这里来展示即可实现上述功能。
-
-
-
-##### 2.4.3.2 代码实现
-
-(1)Dao实现
-
-修改`com.changgou.goods.dao.BrandMapper`添加根据分类ID查询对应的品牌数据，代码如下：
+创建一个CanalDataEventListener类，实现对表增删改操作的监听，代码如下：
 
 ```java
-public interface BrandMapper extends Mapper<Brand> {
+package com.changgou.canal.listener;
+import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xpand.starter.canal.annotation.*;
+@CanalEventListener
+public class CanalDataEventListener {
     /***
-     * 查询分类对应的品牌集合
+     * 增加数据监听
+     * @param eventType
+     * @param rowData
      */
-    @Select("SELECT tb.* FROM tb_category_brand tcb,tb_brand tb WHERE tcb.category_id=#{categoryid} AND tb.id=tcb.brand_id")
-    List<Brand> findByCategory(Integer categoryid);
-}
-```
-
-
-
-(2)Service层
-
-修改`com.changgou.goods.service.BrandService`，添加根据分类ID查询指定的品牌集合方法，代码如下：
-
-```java
-/***
- * 根据分类ID查询品牌集合
- * @param categoryid:分类ID
- */
-List<Brand> findByCategory(Integer categoryid);
-```
-
-修改`com.changgou.goods.service.impl.BrandServiceImpl`添加上面方法的实现，代码如下：
-
-```java
-/***
- * 根据分类ID查询品牌集合
- * @param categoryid:分类ID
- * @return
- */
-@Override
-public List<Brand> findByCategory(Integer categoryid) {
-    //1.查询当前分类所对应的所有品牌信息
-    //2.根据品牌ID查询对应的品牌集合
-    //自己创建DAO实现查询
-    return brandMapper.findByCategory(categoryid);
-}
-```
-
-
-
-(3)Controller层
-
-修改,添加根据分类ID查询对应的品牌数据代码如下：
-
-```java
-/***
- * 根据分类实现品牌列表查询
- * /brand/category/{id}  分类ID
- */
-@GetMapping(value = "/category/{id}")
-public Result<List<Brand>> findBrandByCategory(@PathVariable(value = "id")Integer categoryId){
-    //调用Service查询品牌数据
-    List<Brand> categoryList = brandService.findByCategory(categoryId);
-    return new Result<List<Brand>>(true,StatusCode.OK,"查询成功！",categoryList);
-}
-```
-
-
-
-
-
-
-
-#### 2.4.4 规格查询
-
-##### 2.4.4.1 分析
-
-![1564350812642](image\1564350812642.png)
-
-用户选择分类后，需要根据所选分类对应的模板ID查询对应的规格，规格表结构如下：
-
-```sql
-CREATE TABLE `tb_spec` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `name` varchar(50) DEFAULT NULL COMMENT '名称',
-  `options` varchar(2000) DEFAULT NULL COMMENT '规格选项',
-  `seq` int(11) DEFAULT NULL COMMENT '排序',
-  `template_id` int(11) DEFAULT NULL COMMENT '模板ID',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8;
-```
-
-
-
-##### 2.4.4.2 代码实现
-
-(1)Service层
-
-修改`com.changgou.goods.service.SpecService`添加根据分类ID查询规格列表，代码如下：
-
-```java
-/***
- * 根据分类ID查询规格列表
- * @param categoryid
- * @return
- */
-List<Spec> findByCategoryId(Integer categoryid);
-```
-
-修改`com.changgou.goods.service.impl.SpecServiceImpl`添加上面方法的实现，代码如下：
-
-```java
-@Autowired
-private CategoryMapper categoryMapper;
-/***
- * 根据分类ID查询规格列表
- * @param categoryid
- * @return
- */
-@Override
-public List<Spec> findByCategoryId(Integer categoryid) {
-    //查询分类
-    Category category = categoryMapper.selectByPrimaryKey(categoryid);
-    //根据分类的模板ID查询规格
-    Spec spec = new Spec();
-    spec.setTemplateId(category.getTemplateId());
-    return specMapper.select(spec);
-}
-```
-
-
-
-(2)Controller层
-
-修改`com.changgou.goods.controller.SpecController`添加根据分类ID查询规格数据，代码如下：
-
-```java
-/***
- * 根据分类ID查询对应的规格列表
- */
-@GetMapping(value = "/category/{id}")
-public Result<List<Spec>> findByCategoryId(@PathVariable(value = "id")Integer categoryid){
-    //调用Service查询
-    List<Spec> specs = specService.findByCategoryId(categoryid);
-    return new Result<List<Spec>>(true, StatusCode.OK,"查询成功",specs);
-}
-```
-
-
-
-#### 2.4.5 参数列表查询
-
-##### 2.4.5.1 分析
-
-![1564351047944](image\1564351047944.png)
-
-当用户选中分类后，需要根据分类的模板ID查询对应的参数列表，参数表结构如下：
-
-```sql
-CREATE TABLE `tb_para` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
-  `name` varchar(50) DEFAULT NULL COMMENT '名称',
-  `options` varchar(2000) DEFAULT NULL COMMENT '选项',
-  `seq` int(11) DEFAULT NULL COMMENT '排序',
-  `template_id` int(11) DEFAULT NULL COMMENT '模板ID',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
-```
-
-
-
-##### 2.4.5.2 代码实现
-
-(1)Service层
-
-修改`com.changgou.goods.service.ParaService`添加根据分类ID查询参数列表，代码如下：
-
-```java
-/***
- * 根据分类ID查询参数列表
- * @param id
- * @return
- */
-List<Para> findByCategoryId(Integer id);
-```
-
-修改`com.changgou.goods.service.impl.ParaServiceImpl`添加上面方法的实现，代码如下：
-
-```java
-@Autowired
-private CategoryMapper categoryMapper;
-/***
- * 根据分类ID查询参数列表
- * @param id
- * @return
- */
-@Override
-public List<Para> findByCategoryId(Integer id) {
-    //查询分类信息
-    Category category = categoryMapper.selectByPrimaryKey(id);
-    //根据分类的模板ID查询参数列表
-    Para para = new Para();
-    para.setTemplateId(category.getTemplateId());
-    return paraMapper.select(para);
-}
-```
-
-
-
-(2)Controller层
-
-修改`com.changgou.goods.controller.ParaController`，添加根据分类ID查询参数列表，代码如下：
-
-```java
-/**
- * 根据分类ID查询参数列表
- * @param id
- * @return
- */
-@GetMapping(value = "/category/{id}")
-public Result<List<Para>> getByCategoryId(@PathVariable(value = "id")Integer id){
-    //根据分类ID查询对应的参数信息
-    List<Para> paras = paraService.findByCategoryId(id);
-    Result<List<Para>> result = new Result<List<Para>>(true,StatusCode.OK,"查询分类对应的品牌成功！",paras);
-    return result;
-}
-```
-
-
-
-
-
-#### 2.4.6 SPU+SKU保存 
-
-##### 2.4.6.1 分析
-
-保存商品数据的时候，需要保存Spu和Sku，一个Spu对应多个Sku，我们可以先构建一个Goods对象，将`Spu`和`List<Sku>`组合到一起,前端将2者数据提交过来，再实现添加操作。
-
-
-
-##### 2.4.62 代码实现
-
-(1)Pojo改造
-
-修改changgou-service-goods-api工程创建组合实体类，创建com.changgou.goods.pojo.Goods,代码如下：
-
-```java
-public class Goods implements Serializable {
-    //SPU
-    private Spu spu;
-    //SKU集合
-    private List<Sku> skuList;
-    //..get..set..toString
-}
-```
-
-
-
-(2) 业务层
-
-修改com.changgou.goods.service.SpuService接口，添加保存Goods方法，代码如下：
-
-```java
-/**
- * 保存商品
- * @param goods
- */
-void saveGoods(Goods goods);
-```
-
-
-
-修改com.changgou.goods.service.impl.SpuServiceImpl类，添加保存Goods的方法实现，代码如下：
-
-```java
-@Autowired
-private IdWorker idWorker;
-@Autowired
-private CategoryMapper categoryMapper;
-@Autowired
-private BrandMapper brandMapper;
-@Autowired
-private SkuMapper skuMapper;
-/***
- * 保存Goods
- * @param goods
- */
-@Override
-public void saveGoods(Goods goods) {
-    //增加Spu
-    Spu spu = goods.getSpu();
-    spu.setId(idWorker.nextId());
-    spuMapper.insertSelective(spu);
-    //增加Sku
-    Date date = new Date();
-    Category category = categoryMapper.selectByPrimaryKey(spu.getCategory3Id());
-    Brand brand = brandMapper.selectByPrimaryKey(spu.getBrandId());
-    //获取Sku集合
-    List<Sku> skus = goods.getSkus();
-    //循环将数据加入到数据库
-    for (Sku sku : skus) {
-        //构建SKU名称，采用SPU+规格值组装
-        if(StringUtils.isEmpty(sku.getSpec())){
-            sku.setSpec("{}");
-        }
-        //获取Spu的名字
-        String name = spu.getName();
-        //将规格转换成Map
-        Map<String,String> specMap = JSON.parseObject(sku.getSpec(), Map.class);
-        //循环组装Sku的名字
-        for (Map.Entry<String, String> entry : specMap.entrySet()) {
-            name+="  "+entry.getValue();
-        }
-        sku.setName(name);
-        //ID
-        sku.setId(idWorker.nextId());
-        //SpuId
-        sku.setSpuId(spu.getId());
-        //创建日期
-        sku.setCreateTime(date);
-        //修改日期
-        sku.setUpdateTime(date);
-        //商品分类ID
-        sku.setCategoryId(spu.getCategory3Id());
-        //分类名字
-        sku.setCategoryName(category.getName());
-        //品牌名字
-        sku.setBrandName(brand.getName());
-        //增加
-        skuMapper.insertSelective(sku);
+    @InsertListenPoint
+    public void onEventInsert(CanalEntry.EventType eventType, CanalEntry.RowData rowData) {
+        rowData.getAfterColumnsList().forEach((c) -> System.out.println("By--Annotation: " + c.getName() + " ::   " + c.getValue()));
+    }
+    /***
+     * 修改数据监听
+     * @param rowData
+     */
+    @UpdateListenPoint
+    public void onEventUpdate(CanalEntry.RowData rowData) {
+        System.out.println("UpdateListenPoint");
+        rowData.getAfterColumnsList().forEach((c) -> System.out.println("By--Annotation: " + c.getName() + " ::   " + c.getValue()));
+    }
+    /***
+     * 删除数据监听
+     * @param eventType
+     */
+    @DeleteListenPoint
+    public void onEventDelete(CanalEntry.EventType eventType) {
+        System.out.println("DeleteListenPoint");
+    }
+    /***
+     * 自定义数据修改监听
+     * @param eventType
+     * @param rowData
+     */
+    @ListenPoint(destination = "example", schema = "changgou_content", table = {"tb_content_category", "tb_content"}, eventType = CanalEntry.EventType.UPDATE)
+    public void onEventCustomUpdate(CanalEntry.EventType eventType, CanalEntry.RowData rowData) {
+        System.err.println("DeleteListenPoint");
+        rowData.getAfterColumnsList().forEach((c) -> System.out.println("By--Annotation: " + c.getName() + " ::   " + c.getValue()));
     }
 }
 ```
 
 
 
-(3)控制层
+(4)启动类创建
 
-修改com.changgou.goods.controller.SpuController，增加保存Goods方法，代码如下：
+在com.changgou中创建启动类，代码如下：
+
+```properties
+@SpringBootApplication(exclude={DataSourceAutoConfiguration.class})
+@EnableEurekaClient
+@EnableCanalClient
+public class CanalApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(CanalApplication.class,args);
+    }
+}
+```
+
+
+
+(5)测试
+
+启动canal微服务，然后修改任意数据库的表数据，canal微服务后台输出如下：
+
+![1560816240753](images\1560816240753.png)
+
+
+
+### 6.5 广告同步(作业)
+
+![1565065172531](images\1565065172531.png)
+
+如上图，每次执行广告操作的时候，会记录操作日志到，然后将操作日志发送给canal，canal将操作记录发送给canal微服务，canal微服务根据修改的分类ID调用content微服务查询分类对应的所有广告，canal微服务再将所有广告存入到Redis缓存。
+
+
+
+#### 6.5.1 content微服务搭建
+
+在changgou-service中搭建changgou-service-content微服务，对应的dao、service、controller、pojo由代码生成器生成。
+
+首先在changgou-service-api中创建changgou-service-content-api,将pojo拷贝到API工程中，如下图：
+
+![1560821047399](images\1560821047399.png)
+
+
+
+(1)pom.xml配置
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>changgou-service</artifactId>
+        <groupId>com.changgou</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>changgou-service-content</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.changgou</groupId>
+            <artifactId>changgou-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.changgou</groupId>
+            <artifactId>changgou-service-content-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+</project>
+```
+
+
+
+(2)application.yml配置
+
+```properties
+server:
+  port: 18084
+spring:
+  application:
+    name: content
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://192.168.211.132:3306/changgou_content?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: 123456
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:7001/eureka
+  instance:
+    prefer-ip-address: true
+feign:
+  hystrix:
+    enabled: true
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true  #开启驼峰功能
+#hystrix 配置
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+        #如果enabled设置为false，则请求超时交给ribbon控制
+          enabled: true
+        isolation:
+          strategy: SEMAPHORE
+```
+
+
+
+(3)启动类创建
 
 ```java
-/***
- * 添加Goods
- * @param goods
- * @return
- */
-@PostMapping("/save")
-public Result save(@RequestBody Goods goods){
-    spuService.saveGoods(goods);
-    return new Result(true,StatusCode.OK,"保存成功");
-}
-```
-
-
-
-测试数据
-
-```json
-{
-  "skuList": [
-    {
-      "alertNum": 10,
-      "brandName": "华为",
-      "categoryId": 64,
-      "commentNum": 0,
-      "image": "http://www.baidu.com",
-      "images": "",
-      "name": "华为P30手机",
-      "num": 5,
-      "price": 1000,
-      "saleNum": 0,
-      "sn": "No1001",
-      "spec": "{\"颜色\":\"红色\",\"网络\":\"移动3G\"}",
-      "weight": 0
+@SpringBootApplication
+@EnableEurekaClient
+@MapperScan(basePackages = {"com.changgou.content.dao"})
+public class ContentApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ContentApplication.class);
     }
-  ],
-  "spu": {
-    "brandId": 8557,
-    "caption": "华为手机大促销",
-    "category1Id": 1,
-    "category2Id": 59,
-    "category3Id": 64,
-    "commentNum": 0,
-    "freightId": 0,
-    "images": "http://www.qingcheng.com/image/1.jpg,http://www.qingcheng.com/image/2.jpg",
-    "introduction": "华为产品世界最强",
-    "isEnableSpec": "1",
-    "isMarketable": "1",
-    "name": "string",
-    "specItems": "{\"颜色\":[\"红\",\"绿\"],\"机身内存\":[\"64G\",\"8G\"]}",
-    "paraItems": "{\"赠品\":\"充电器\",\"出厂年份\":\"2019\"}",
-    "saleNum": 0,
-    "saleService": "一年包换",
-    "sn": "No10001",
-    "status": "1",
-    "templateId": 42
-  }
 }
 ```
 
 
 
+#### 6.5.2 广告查询
 
-
-#### 2.4.7 根据ID查询商品 
-
-##### 2.4.7.1 需求分析
-
-需求：根据id 查询SPU和SKU列表 ，显示效果如下：
-
-```json
-{
-    "spu": {
-		"brandId": 0,
-		"caption": "111",
-		"category1Id": 558,
-		"category2Id": 559,
-		"category3Id": 560,
-		"commentNum": null,
-		"freightId": null,
-		"id": 149187842867993,
-		"image": null,
-		"images": null,
-		"introduction": null,
-		"isDelete": null,
-		"isEnableSpec": "0",
-		"isMarketable": "1",
-		"name": "黑马智能手机",
-		"paraItems": null,
-		"saleNum": null,
-		"saleService": null,
-		"sn": null,
-		"specItems": null,
-		"status": null,
-		"templateId": 42
-	},
-	"skuList": [{
-		"alertNum": null,
-		"brandName": "金立（Gionee）",
-		"categoryId": 560,
-		"categoryName": "手机",
-		"commentNum": null,
-		"createTime": "2018-11-06 10:17:08",
-		"id": 1369324,
-		"image": null,
-		"images": "blob:http://localhost:8080/ec04d1a5-d865-4e7f-a313-2e9a76cfb3f8",
-		"name": "黑马智能手机",
-		"num": 100,
-		"price": 900000,
-		"saleNum": null,
-		"sn": "",
-		"spec": null,
-		"spuId": 149187842867993,
-		"status": "1",
-		"updateTime": "2018-11-06 10:17:08",
-		"weight": null
-	},{
-		"alertNum": null,
-		"brandName": "金立（Gionee）",
-		"categoryId": 560,
-		"categoryName": "手机",
-		"commentNum": null,
-		"createTime": "2018-11-06 10:17:08",
-		"id": 1369325,
-		"image": null,
-		"images": "blob:http://localhost:8080/ec04d1a5-d865-4e7f-a313-2e9a76cfb3f8",
-		"name": "黑马智能手机",
-		"num": 100,
-		"price": 900000,
-		"saleNum": null,
-		"sn": "",
-		"spec": null,
-		"spuId": 149187842867993,
-		"status": "1",
-		"updateTime": "2018-11-06 10:17:08",
-		"weight": null
-	  }
-   ]
-}
-```
-
-
-
-##### 2.4.7.2 代码实现
+在content微服务中，添加根据分类查询广告。
 
 (1)业务层
 
-修改qingcheng-service-goods工程,修改com.changgou.goods.service.SpuService接口,添加根据ID查找方法findGoodsById代码如下：
+修改changgou-service-content的com.changgou.content.service.ContentService接口，添加根据分类ID查询广告数据，代码如下：
 
 ```java
 /***
- * 根据SPU的ID查找SPU以及对应的SKU集合
- * @param spuId
+ * 根据categoryId查询广告集合
+ * @param id
+ * @return
  */
-Goods findGoodsById(Long spuId);
+List<Content> findByCategory(Long id);
 ```
 
 
 
-修改qingcheng-service-goods工程，修改com.changgou.goods.service.impl.SpuServiceImpl类，添加根据ID查找findGoodsById方法，代码如下：
+修改changgou-service-content的com.changgou.content.service.impl.ContentServiceImpl接口实现类，添加根据分类ID查询广告数据，代码如下：
 
 ```java
 /***
- * 根据SpuID查询goods信息
- * @param spuId
+ * 根据分类ID查询
+ * @param id
  * @return
  */
 @Override
-public Goods findGoodsById(Long spuId) {
-    //查询Spu
-    Spu spu = spuMapper.selectByPrimaryKey(spuId);
-    //查询List<Sku>
-    Sku sku = new Sku();
-    sku.setSpuId(spuId);
-    List<Sku> skus = skuMapper.select(sku);
-    //封装Goods
-    Goods goods = new Goods();
-    goods.setSkus(skus);
-    goods.setSpu(spu);
-    return goods;
+public List<Content> findByCategory(Long id) {
+    Content content = new Content();
+    content.setCategoryId(id);
+    content.setStatus("1");
+    return contentMapper.select(content);
 }
 ```
 
@@ -944,544 +1585,124 @@ public Goods findGoodsById(Long spuId) {
 
 (2)控制层
 
-修改com.changgou.goods.controller.SpuController，修改findById方法，代码如下：
+修改changgou-service-content的com.changgou.content.controller.ContentController,添加根据分类ID查询广告数据，代码如下：
 
 ```java
 /***
- * 根据ID查询Goods
- * @param id
- * @return
+ * 根据categoryId查询广告集合
  */
-@GetMapping("/goods/{id}")
-public Result<Goods> findGoodsById(@PathVariable Long id){
-    //根据ID查询Goods(SPU+SKU)信息
-    Goods goods = spuService.findGoodsById(id);
-    return new Result<Goods>(true,StatusCode.OK,"查询成功",goods);
+@GetMapping(value = "/list/category/{id}")
+public Result<List<Content>> findByCategory(@PathVariable Long id){
+    //根据分类ID查询广告集合
+    List<Content> contents = contentService.findByCategory(id);
+    return new Result<List<Content>>(true,StatusCode.OK,"查询成功！",contents);
 }
 ```
 
-测试：`http://localhost:18081/spu/goods/1088256029394866176`
 
 
 
 
+(3)feign配置
 
-#### 2.4.8 保存修改 
+在changgou-service-content-api工程中添加feign，代码如下：
 
-修改changgou-service-goods的SpuServiceImpl的saveGoods方法，修改添加SPU部分代码：
+```java
+@FeignClient(name="content")
+@RequestMapping(value = "/content")
+public interface ContentFeign {
+    /***
+     * 根据分类ID查询所有广告
+     */
+    @GetMapping(value = "/list/category/{id}")
+    Result<List<Content>> findByCategory(@PathVariable Long id);
+}
+```
 
-![1564353154985](image\1564353154985.png)
+
+
+#### 6.5.3 同步实现
+
+在canal微服务中修改如下:
+
+(1)配置redis
+
+修改application.yml配置文件，添加redis配置，如下代码：
+
+![1560821433324](images\1560821433324.png)
+
+
+
+(2)启动类中开启feign
+
+修改CanalApplication，添加`@EnableFeignClients`注解，代码如下：
+
+![1566234693652](images/1566234693652.png)
+
+
+
+(3)同步实现
+
+修改监听类CanalDataEventListener，实现监听广告的增删改，并根据增删改的数据使用feign查询对应分类的所有广告，将广告存入到Redis中，代码如下：
+
+
 
 上图代码如下：
 
 ```java
-if(spu.getId()==null){
-    //增加
-    spu.setId(idWorker.nextId());
-    spuMapper.insertSelective(spu);
-}else{
-    //修改数据
-    spuMapper.updateByPrimaryKeySelective(spu);
-    //删除该Spu的Sku
-    Sku sku = new Sku();
-    sku.setSpuId(spu.getId());
-    skuMapper.delete(sku);
-}
-```
-
-
-
-#### 2.4.9 修改SKU库存
-
-（学员实现）
-
-
-
-## 3 商品审核与上下架
-
-### 3.1 需求分析
-
-商品新增后，审核状态为0（未审核），默认为下架状态。
-
-审核商品，需要校验是否是被删除的商品，如果未删除则修改审核状态为1，并自动上架
-
-下架商品，需要校验是否是被删除的商品，如果未删除则修改上架状态为0
-
-上架商品，需要审核通过的商品
-
-
-
-### 3.2 实现思路
-
-（1）按照ID查询SPU信息
-
-（2）判断修改审核、上架和下架状态
-
-（3）保存SPU
-
-
-
-### 3.3 代码实现
-
-#### 3.3.1 商品审核
-
-实现审核通过，自动上架。
-
-
-
-(1)业务层
-
-修改修改changgou-service-goods工程的com.changgou.goods.service.SpuService接口，添加审核方法，代码如下：
-
-```java
-/***
- * 商品审核
- * @param spuId
- */
-void audit(Long spuId);
-```
-
-
-
-修改changgou-service-goods工程的com.changgou.goods.service.impl.SpuServiceImpl类，添加audit方法，代码如下：
-
-```java
-/***
- * 商品审核
- * @param spuId
- */
-@Override
-public void audit(Long spuId) {
-    //查询商品
-    Spu spu = spuMapper.selectByPrimaryKey(spuId);
-    //判断商品是否已经删除
-    if(spu.getIsDelete().equalsIgnoreCase("1")){
-        throw new RuntimeException("该商品已经删除！");
+@CanalEventListener
+public class CanalDataEventListener {
+    @Autowired
+    private ContentFeign contentFeign;
+    //字符串
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+    //自定义数据库的 操作来监听
+    //destination = "example"
+    @ListenPoint(destination = "example",
+            schema = "changgou_content",
+            table = {"tb_content", "tb_content_category"},
+            eventType = {
+                    CanalEntry.EventType.UPDATE,
+                    CanalEntry.EventType.DELETE,
+                    CanalEntry.EventType.INSERT})
+    public void onEventCustomUpdate(CanalEntry.EventType eventType, CanalEntry.RowData rowData) {
+        //1.获取列名 为category_id的值
+        String categoryId = getColumnValue(eventType, rowData);
+        //2.调用feign 获取该分类下的所有的广告集合
+        Result<List<Content>> categoryresut = contentFeign.findByCategory(Long.valueOf(categoryId));
+        List<Content> data = categoryresut.getData();
+        //3.使用redisTemplate存储到redis中
+        stringRedisTemplate.boundValueOps("content_" + categoryId).set(JSON.toJSONString(data));
     }
-    //实现上架和审核
-    spu.setStatus("1"); //审核通过
-    spu.setIsMarketable("1"); //上架
-    spuMapper.updateByPrimaryKeySelective(spu);
-}
-```
-
-
-
-(2)控制层
-
-修改com.changgou.goods.controller.SpuController，新增audit方法，代码如下：
-
-```java
-/**
- * 审核
- * @param id
- * @return
- */
-@PutMapping("/audit/{id}")
-public Result audit(@PathVariable Long id){
-    spuService.audit(id);
-    return new Result(true,StatusCode.OK,"审核成功");
-}
-```
-
-
-
-#### 3.3.2 下架商品
-
-(1)业务层
-
-修改com.changgou.goods.service.SpuService接口，添加pull方法，用于商品下架，代码如下：
-
-```java
-/***
- * 商品下架
- * @param spuId
- */
-void pull(Long spuId);
-```
-
-
-
-修改com.changgou.goods.service.impl.SpuServiceImpl，添加如下方法：
-
-```java
-/**
- * 商品下架
- * @param spuId
- */
-@Override
-public void pull(Long spuId) {
-    Spu spu = spuMapper.selectByPrimaryKey(spuId);
-    if(spu.getIsDelete().equals("1")){
-        throw new RuntimeException("此商品已删除！");
+    private String getColumnValue(CanalEntry.EventType eventType, CanalEntry.RowData rowData) {
+        String categoryId = "";
+        //判断 如果是删除  则获取beforlist
+        if (eventType == CanalEntry.EventType.DELETE) {
+            for (CanalEntry.Column column : rowData.getBeforeColumnsList()) {
+                if (column.getName().equalsIgnoreCase("category_id")) {
+                    categoryId = column.getValue();
+                    return categoryId;
+                }
+            }
+        } else {
+            //判断 如果是添加 或者是更新 获取afterlist
+            for (CanalEntry.Column column : rowData.getAfterColumnsList()) {
+                if (column.getName().equalsIgnoreCase("category_id")) {
+                    categoryId = column.getValue();
+                    return categoryId;
+                }
+            }
+        }
+        return categoryId;
     }
-    spu.setIsMarketable("0");//下架状态
-    spuMapper.updateByPrimaryKeySelective(spu);
 }
 ```
 
 
 
-(2)控制层
+测试：
 
-修改com.changgou.goods.controller.SpuController，添加pull方法，代码如下：
+修改数据库数据，可以看到Redis中的缓存跟着一起变化
 
-```java
-/**
- * 下架
- * @param id
- * @return
- */
-@PutMapping("/pull/{id}")
-public Result pull(@PathVariable Long id){
-    spuService.pull(id);
-    return new Result(true,StatusCode.OK,"下架成功");
-}
-```
-
-
-
-#### 3.3.3 上架商品 
-
-必须是通过审核的商品才能上架
-
-(1)业务层
-
-修改com.changgou.goods.service.SpuService，添加put方法，代码如下：
-
-```java
-/***
- * 商品上架
- * @param spuId
- */
-void put(Long spuId);
-```
-
-
-
-修改com.changgou.goods.service.impl.SpuServiceImpl，添加put方法实现，代码如下：
-
-```java
-/***
- * 商品上架
- * @param spuId
- */
-@Override
-public void put(Long spuId) {
-    Spu spu = spuMapper.selectByPrimaryKey(spuId);
-    //检查是否删除的商品
-    if(spu.getIsDelete().equals("1")){
-        throw new RuntimeException("此商品已删除！");
-    }
-    if(!spu.getStatus().equals("1")){
-        throw new RuntimeException("未通过审核的商品不能！");
-    }
-    //上架状态
-    spu.setIsMarketable("1");
-    spuMapper.updateByPrimaryKeySelective(spu);
-}
-```
-
-
-
-(2)控制层
-
-修改com.changgou.goods.controller.SpuController，添加put方法代码如下：
-
-```java
-/**
- * 商品上架
- * @param id
- * @return
- */
-@PutMapping("/put/{id}")
-public Result put(@PathVariable Long id){
-    spuService.put(id);
-    return new Result(true,StatusCode.OK,"上架成功");
-}
-```
-
-
-
-#### 3.3.4 批量上架 
-
-前端传递一组商品ID，后端进行批量上下架处理
-
-(1)业务层
-
-修改com.changgou.goods.service.SpuService接口，代码如下：
-
-```java
-int putMany(Long[] ids);
-```
-
-
-
-修改com.changgou.goods.service.impl.SpuServiceImpl，添加批量上架方法实现，代码如下：
-
-```java
-/***
- * 批量上架
- * @param ids:需要上架的商品ID集合
- * @return
- */
-@Override
-public int putMany(Long[] ids) {
-    Spu spu=new Spu();
-    spu.setIsMarketable("1");//上架
-    //批量修改
-    Example example=new Example(Spu.class);
-    Example.Criteria criteria = example.createCriteria();
-    criteria.andIn("id", Arrays.asList(ids));//id
-    //下架
-    criteria.andEqualTo("isMarketable","0");
-    //审核通过的
-    criteria.andEqualTo("status","1");
-    //非删除的
-    criteria.andEqualTo("isDelete","0");
-    return spuMapper.updateByExampleSelective(spu, example);
-}
-```
-
-
-
-(2)控制层
-
-修改com.changgou.goods.controller.SpuController，天啊及批量上架方法，代码如下：
-
-```java
-/**
- *  批量上架
- * @param ids
- * @return
- */
-@PutMapping("/put/many")
-public Result putMany(@RequestBody Long[] ids){
-    int count = spuService.putMany(ids);
-    return new Result(true,StatusCode.OK,"上架"+count+"个商品");
-}
-```
-
-
-
-使用Postman测试：
-
-![1564377657530](image\1564377657530.png)
-
-
-
-#### 3.3.5 批量下架
-
-学员实现
-
-
-
-## 4 删除与还原商品 
-
-### 4.1 需求分析 
-
-请看管理后台的静态原型
-
-商品列表中的删除商品功能，并非真正的删除，而是将删除标记的字段设置为1，
-
-在回收站中有恢复商品的功能，将删除标记的字段设置为0
-
-在回收站中有删除商品的功能，是真正的物理删除。
-
-
-
-### 4.2 实现思路 
-
-逻辑删除商品，修改spu表is_delete字段为1
-
-商品回收站显示spu表is_delete字段为1的记录
-
-回收商品，修改spu表is_delete字段为0
-
-
-
-### 4.3 代码实现 
-
-#### 4.3.1 逻辑删除商品 
-
-(1)业务层
-
-修改com.changgou.goods.service.SpuService接口，增加logicDelete方法，代码如下：
-
-```java
-/***
- * 逻辑删除
- * @param spuId
- */
-void logicDelete(Long spuId);
-```
-
-
-
-修改com.changgou.goods.service.impl.SpuServiceImpl，添加logicDelete方法实现，代码如下：
-
-```java
-/***
- * 逻辑删除
- * @param spuId
- */
-@Override
-@Transactional
-public void logicDelete(Long spuId) {
-    Spu spu = spuMapper.selectByPrimaryKey(spuId);
-    //检查是否下架的商品
-    if(!spu.getIsMarketable().equals("0")){
-        throw new RuntimeException("必须先下架再删除！");
-    }
-    //删除
-    spu.setIsDelete("1");
-    //未审核
-    spu.setStatus("0");
-    spuMapper.updateByPrimaryKeySelective(spu);
-}
-```
-
-
-
-(2)控制层
-
-修改com.changgou.goods.controller.SpuController，添加logicDelete方法，如下：
-
-```java
-/**
- * 逻辑删除
- * @param id
- * @return
- */
-@DeleteMapping("/logic/delete/{id}")
-public Result logicDelete(@PathVariable Long id){
-    spuService.logicDelete(id);
-    return new Result(true,StatusCode.OK,"逻辑删除成功！");
-}
-```
-
-
-
-#### 4.3.2 还原被删除的商品 
-
-(1)业务层
-
-修改com.changgou.goods.service.SpuService接口，添加restore方法代码如下：
-
-```java
-/***
- * 还原被删除商品
- * @param spuId
- */
-void restore(Long spuId);
-```
-
-修改com.changgou.goods.service.impl.SpuServiceImpl类，添加restore方法，代码如下：
-
-```java
-/**
- * 恢复数据
- * @param spuId
- */
-@Override
-public void restore(Long spuId) {
-    Spu spu = spuMapper.selectByPrimaryKey(spuId);
-    //检查是否删除的商品
-    if(!spu.getIsDelete().equals("1")){
-        throw new RuntimeException("此商品未删除！");
-    }
-    //未删除
-    spu.setIsDelete("0");
-    //未审核
-    spu.setStatus("0");
-    spuMapper.updateByPrimaryKeySelective(spu);
-}
-```
-
-
-
-(2)控制层
-
-修改com.changgou.goods.controller.SpuController，添加restore方法，代码如下：
-
-```java
-/**
- * 恢复数据
- * @param id
- * @return
- */
-@PutMapping("/restore/{id}")
-public Result restore(@PathVariable Long id){
-    spuService.restore(id);
-    return new Result(true,StatusCode.OK,"数据恢复成功！");
-}
-```
-
-
-
-
-
-#### 4.3.3 物理删除商品  
-
-修改com.changgou.goods.service.impl.SpuServiceImpl的delete方法,代码如下：
-
-```java
-/**
- * 删除
- * @param id
- */
-@Override
-public void delete(Long id){
-    Spu spu = spuMapper.selectByPrimaryKey(id);
-    //检查是否被逻辑删除  ,必须先逻辑删除后才能物理删除
-    if(!spu.getIsDelete().equals("1")){
-        throw new RuntimeException("此商品不能删除！");
-    }
-    spuMapper.deleteByPrimaryKey(id);
-}
-```
-
-
-
-## 5 商品列表
-
-### 5.1 需求分析
-
-如图所示 展示商品的列表。并实现分页。
-
-![1559285820832](image/1559285820832.png)
-
-思路：
-
-```properties
-根据查询的条件 分页查询 并返回分页结果即可。
-分页查询 采用 pagehelper ，条件查询  通过map进行封装传递给后台即可。
-```
-
-
-
-### 5.2 代码实现
-
-在代码生成器生成的代码中已经包含了该实现，这里就省略了。
-
-控制层（SpuController）:
-
-```java
-/***
- * Spu分页条件搜索实现
- * @param spu
- * @param page
- * @param size
- * @return
- */
-@PostMapping(value = "/search/{page}/{size}" )
-public Result<PageInfo> findPage(@RequestBody(required = false) Spu spu, @PathVariable  int page, @PathVariable  int size){
-    //执行搜索
-    PageInfo<Spu> pageInfo = spuService.findPage(spu, page, size);
-    return new Result(true,StatusCode.OK,"查询成功",pageInfo);
-}
-```
-
-
-
-其他每层代码，代码生成器已经生成，这里就不再列出来了。
+![1560821740561](images\1560821740561.png)
