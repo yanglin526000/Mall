@@ -7,7 +7,6 @@
         tar zxf lua-5.4.0.tar.gz
         cd lua-5.4.0
         make linux test
-        make linux test
         make install
     Test:
         lua
@@ -18,6 +17,20 @@
         yum install yum-utils
         yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo
     Installation:
-        yum install openresty
-
+        yum install -y openresty
+    Open 80 port:
+        firewall-cmd --zone=public --remove-port=80/tcp --permanent
+        firewall-cmd --reload
+    Start:
+        systemctl start openresty
+    Restart:
+        systemctl restart openresty
+    Stop:
+        systemctl stop openresty
+    Visit local site:
+        http://172.16.26.128/
+    See current OpenResty version:
+        /usr/local/openresty/bin/openresty -V
+    Install cmd tool for openresty named resty:
+        yum install -y openresty-resty
 
