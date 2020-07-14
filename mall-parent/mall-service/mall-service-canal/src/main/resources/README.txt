@@ -1,4 +1,4 @@
-1.Install Lua in Linux:
+1.Install Lua in CentOS8:
     Preparation:
         yum install gcc
         yum install make
@@ -12,7 +12,7 @@
         lua
         lua -i
 
-2.Install OpenResty in Linux:
+2.Install OpenResty in CentOS8:
     Preparation:
         yum install yum-utils
         yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo
@@ -33,4 +33,17 @@
         /usr/local/openresty/bin/openresty -V
     Install cmd tool for openresty named resty:
         yum install -y openresty-resty
+
+3.Install Redis in CentOS8:
+    Pull image:
+        docker pull redis
+    Run:
+        docker run -itd --name redis-mall -p 6379:6379 redis
+    Test:
+        docker exec -it redis-mall /bin/bash
+        redis-cli
+
+
+
+
 
