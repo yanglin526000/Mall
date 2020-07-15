@@ -27,6 +27,8 @@
         systemctl restart openresty
     Stop:
         systemctl stop openresty
+    Reboot CentOS8:
+        reboot
     Visit local site:
         http://172.16.26.128/
     See current OpenResty version:
@@ -42,6 +44,8 @@
     Test:
         docker exec -it redis-mall /bin/bash
         redis-cli
+
+
 
 
 
