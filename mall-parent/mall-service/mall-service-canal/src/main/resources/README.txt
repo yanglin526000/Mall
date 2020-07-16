@@ -139,10 +139,10 @@
         end
 
     vi /usr/local/openresty/nginx/conf/nginx.conf 添加头信息，和 location信息
+        lua_shared_dict dis_cache 128m;
         server {
             listen       80;
             server_name  localhost;
-            lua_shared_dict dis_cache 128m;
             location /update_content {
                 content_by_lua_file /root/lua/update_content.lua;
             }
@@ -155,6 +155,6 @@
         172.16.26.128/update_content?id=1
         172.16.26.128/read_content?id=1
 
-
+5. Nginx Current Limit
 
 
