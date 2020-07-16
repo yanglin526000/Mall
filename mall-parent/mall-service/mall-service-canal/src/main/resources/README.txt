@@ -142,10 +142,10 @@
         end
 
     vi /usr/local/openresty/nginx/conf/nginx.conf 添加头信息，和 location信息
-        lua_shared_dict dis_cache 128m;
         server {
             listen       80;
             server_name  localhost;
+            lua_shared_dict dis_cache 128m;
             location /update_content {
                 content_by_lua_file /root/lua/update_content.lua;
             }
