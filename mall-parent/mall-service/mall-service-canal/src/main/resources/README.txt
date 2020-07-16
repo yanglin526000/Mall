@@ -49,10 +49,7 @@
 
     Config in /etc/mysql/my.cnf about MySQL8 in docker!!!!!!
     ===================================================================
-    mkdir –p /home/data/
-    mkdir –p /home/data/mysql/
-    mkdir –p /home/data/mysql/conf/
-    mkdir –p /home/data/mysql/data/
+    mkdir -p /home/data/mysql/conf && mkdir -p /home/data/mysql/data
 
     docker cp MySQL8.0.20:/etc/mysql/my.cnf /home/data/mysql/conf/my.cnf
     vi /home/data/mysql/conf/my.cnf
