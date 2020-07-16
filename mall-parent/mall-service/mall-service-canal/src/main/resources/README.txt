@@ -49,6 +49,11 @@
 
     Config in /etc/mysql/my.cnf about MySQL8 in docker!!!!!!
     ===================================================================
+    mkdir –p /home/data/
+    mkdir –p /home/data/mysql/
+    mkdir –p /home/data/mysql/conf/
+    mkdir –p /home/data/mysql/data/
+
     docker cp MySQL8.0.20:/etc/mysql/my.cnf /home/data/mysql/conf/my.cnf
     vi /home/data/mysql/conf/my.cnf
         default_authentication_plugin=mysql_native_password
@@ -93,16 +98,6 @@
         ngx.say("{flag:true}")
 
 
-    vi /usr/local/openresty/nginx/conf/nginx.conf 添加头信息，和 location信息
-        lua_shared_dict dis_cache 128m;
-        server {
-            listen       80;
-            server_name  localhost;
-            location /update_content {
-                content_by_lua_file /root/lua/update_content.lua;
-            }
-        }
-
     touch /root/lua/read_content.lua
     vi /root/lua/read_content.lua
         ngx.header.content_type="application/json;charset=utf8"
@@ -145,6 +140,19 @@
         else
             ngx.say(contentCache)
         end
+
+    vi /usr/local/openresty/nginx/conf/nginx.conf 添加头信息，和 location信息
+        lua_shared_dict dis_cache 128m;
+        server {
+            listen       80;
+            server_name  localhost;
+            location /update_content {
+                content_by_lua_file /root/lua/update_content.lua;
+            }
+            location /read_content {
+                 content_by_lua_file /root/lua/read_content.lua;
+            }
+        }
 
 
 
