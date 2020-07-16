@@ -154,6 +154,9 @@
             }
         }
 
+    Visit local site(Verify the data exits the MySQL8 database):
+        172.16.26.128/update_content?id=1
+        172.16.26.128/read_content?id=1
 
 
 
