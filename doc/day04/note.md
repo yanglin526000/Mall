@@ -1182,7 +1182,7 @@ vi mysqld.cnf
 上图配置如下：
 
 ```properties
-log-bin/var/lib/mysql/mysql-bin
+log-bin=/var/lib/mysql/mysql-bin
 server-id=12345
 ```
 
@@ -1237,6 +1237,8 @@ vi instance.properties
 ```
 
 修改canal.properties的id，不能和mysql的server-id重复，如下图：
+
+canal.id = 1001
 
 ![1560814792482](images\1560814792482.png)
 
