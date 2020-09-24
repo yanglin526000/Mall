@@ -18,13 +18,13 @@
 近年来，世界经济正向数字化转型，大力发展数字经济成为全球共识。党的十九大报告明确提出要建设“数字中国”“网络强国”，我国数字经济发展进入新阶段，市场规模位居全球第二，数字经济与实体经济深度融合，有力促进了供给侧结构性改革。电子商务是数字经济的重要组成部分，是数字经济最活跃、最集中的表现形式之一。2017年，在政府和市场共同推动下，我国电子商务发展更加注重效率、质量和创新，取得了一系列新的进展，在壮大数字经济、共建“一带一路”、助力乡村振兴、带动创新创业、促进经济转型升级等诸多方面发挥了重要作用，成为我国经济增长的新动力。
 2017年，我国电子商务交易规模继续扩大，并保持高速增长态势。国家统计局数据显示，2017年全国电子商务交易额达29.16万亿元，同比增长11.7%；网上零售额7.18万亿元，同比增长32.2%。我国电子商务优势进一步扩大，网络零售规模全球最大、产业创新活力世界领先。数据显示，截止2017年底，全国网络购物用户规模达5.33亿，同比增长14.3%；非银行支付机构发生网络支付金额达143.26万亿元，同比增长44.32%；全国快递服务企业业务量累计完成400.6亿件，同比增长28%；电子商务直接从业人员和间接带动就业达4250万人。
 
-![1559552887142](image\1559552887142.png)
+![1559552887142](image/1559552887142.png)
 
 
 
 2018天猫全天成交额记录
 
-![1559553569582](image\1559553569582.png)
+![1559553569582](image/1559553569582.png)
 
 
 
@@ -128,17 +128,17 @@ B2B2C是一种电子商务类型的网络购物商业模式，B是BUSINESS的简
 
 网站前台静态原型演示，打开`资料\页面\前台\project-changgou-portal-fis3-master`，首页`index.html`
 
-![1559111851979](image\1559111851979.png)
+![1559111851979](image/1559111851979.png)
 
 
 
 网站管理后台静态原型演示:http://czpm.itcast.cn/青橙后台/#g=1&p=后台首页
 
-![1559112046165](image\1559112046165.png)
+![1559112046165](image/1559112046165.png)
 
 打开`资料\页面\后台\project-changgou-cmm-fis3-master\pages`,首页`all-medical-main.html`
 
-![1559111970498](image\1559111970498.png)
+![1559111970498](image/1559111970498.png)
 
 
 
@@ -162,7 +162,7 @@ B2B2C是一种电子商务类型的网络购物商业模式，B是BUSINESS的简
 
 把精力放在html5，css3，vuejs，webpack，nodejs，Google V8引擎，javascript多线程，模块化，面向切面编程，设计模式，浏览器兼容性，性能优化等等。
 
-![1559553886871](image\1559553886871.png)
+![1559553886871](image/1559553886871.png)
 
 我们在本课程中提供与项目课程配套的管理后台的前端代码，但是不讲解前端的内容。这样我们会将更多的精力放在**后端代码**的开发上！
 
@@ -172,13 +172,13 @@ B2B2C是一种电子商务类型的网络购物商业模式，B是BUSINESS的简
 
 #### 1.2.2.2. 技术架构
 
-![1560087134452](image\1560087134452.png)
+![1560087134452](image/1560087134452.png)
 
 
 
 #### 1.2.2.3. 系统架构图
 
-![1560090475333](image\1560090475333.png)
+![1560090475333](image/1560090475333.png)
 
 
 
@@ -208,13 +208,13 @@ B2B2C是一种电子商务类型的网络购物商业模式，B是BUSINESS的简
 
 数据库脚本：`资料\数据库脚本`
 
-![1564094555825](image\1564094555825.png)
+![1564094555825](image/1564094555825.png)
 
 
 
 ### 1.3.2. 项目结构说明
 
-![1559113404367](image\1559113404367.png)
+![1559113404367](image/1559113404367.png)
 
 
 
@@ -345,7 +345,7 @@ pom.xml中打pom包
 
 项目结构如下：
 
-![1564024579642](image\1564024579642.png)
+![1564024579642](image/1564024579642.png)
 
 
 
@@ -404,7 +404,7 @@ eureka:
 
 创建包com.changgou  包下创建启动类EurekaApplication，代码如下：
 
-![1560411732580](image\1560411732580.png)
+![1560411732580](image/1560411732580.png)
 
 上图代码如下：
 
@@ -423,7 +423,7 @@ public class EurekaApplication {
 
 测试访问`http://localhost:7001/`,效果如下：
 
-![1560412105435](image\1560412105435.png)
+![1560412105435](image/1560412105435.png)
 
 
 
@@ -571,7 +571,7 @@ public class PageResult<T> {
 
 当然，我们还可以将其他工具类都一起倒入到工程中，以后会用到，将`资料\工具类`中的所有类直接导入到entity包下。
 
-![1564023015741](image\1564023015741.png)
+![1564023015741](image/1564023015741.png)
 
 
 
@@ -635,7 +635,7 @@ public class PageResult<T> {
 
 创建changgou-service-api子模块changgou-service-goods-api，并将`资料\javabean\changgou-service-goods-api`中的Pojo导入到工程中。
 
-![1560416099767](image\1560416099767.png)
+![1560416099767](image/1560416099767.png)
 
 
 
@@ -740,7 +740,7 @@ mybatis:
 
 在包com.changgou.goods 包下创建启动类GoodsApplication，代码如下：
 
-![1560416869439](image\1560416869439.png)
+![1560416869439](image/1560416869439.png)
 
 上图代码如下：
 
@@ -761,7 +761,7 @@ public class GoodsApplication {
 
 启动`changgou-service-goods` 再访问`<http://localhost:7001/>`效果如下：
 
-![1564037101313](image\1564037101313.png)
+![1564037101313](image/1564037101313.png)
 
 
 
@@ -913,7 +913,7 @@ public class BrandController {
 
 测试：http://localhost:18081/brand
 
-![1560443629855](image\1560443629855.png)
+![1560443629855](image/1560443629855.png)
 
 
 
@@ -974,7 +974,7 @@ public Result<Brand> findById(@PathVariable Integer id){
 
 测试：<http://localhost:18081/brand/14026>
 
-![1560443736710](image\1560443736710.png)
+![1560443736710](image/1560443736710.png)
 
 
 
@@ -1030,7 +1030,7 @@ public Result add(@RequestBody Brand brand){
 
 测试：http://localhost:18081/brand
 
-![1560443988970](image\1560443988970.png)
+![1560443988970](image/1560443988970.png)
 
 
 
@@ -1090,7 +1090,7 @@ public Result update(@RequestBody Brand brand,@PathVariable Integer id){
 
 测试：http://localhost:18081/brand/325415
 
-![1560444209790](image\1560444209790.png)
+![1560444209790](image/1560444209790.png)
 
 
 
@@ -1146,7 +1146,7 @@ public Result delete(@PathVariable Integer id){
 
 测试：http://localhost:18081/brand/325415
 
-![1560444351992](image\1560444351992.png)
+![1560444351992](image/1560444351992.png)
 
 
 
@@ -1241,7 +1241,7 @@ public Result<List<Brand>> findList(@RequestBody(required = false) Brand brand){
 
 测试：http://localhost:18081/brand/search
 
-![1560445027032](image\1560445027032.png)
+![1560445027032](image/1560445027032.png)
 
 
 
@@ -1306,7 +1306,7 @@ public Result<PageInfo> findPage(@PathVariable  int page, @PathVariable  int siz
 
 测试：http://localhost:18081/brand/search/1/3
 
-![1560446429340](image\1560446429340.png)
+![1560446429340](image/1560446429340.png)
 
 
 
@@ -1376,7 +1376,7 @@ public Result<PageInfo> findPage(@RequestBody(required = false) Brand brand, @Pa
 
 测试：http://localhost:18081/brand/search/1/3
 
-![1560446545220](image\1560446545220.png)
+![1560446545220](image/1560446545220.png)
 
 
 
