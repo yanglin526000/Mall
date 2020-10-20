@@ -1,12 +1,37 @@
 第一天主要是框架搭建，建立分布式项目，使用的是自己钻研的自动接口生成器实现商品的增删改查，下面操作可以操作成果：
+1. 虚拟机安装CentOS8，请参照"1.框架搭建-vmware 安装centos8，配置静态网关.mhtml"，账号-root，密码-yanglin5260，通过SecureCRT连接
+2. 基于Maven的依赖工程搭建
+3. 商品微服务，Eureka微服务，数据访问工程mall-common-db，公共模块mall-common的搭建
+4. 商品的增删改查，还包括如下：
+    通用批量添加（主要用于多对多的关系表）
+    一（主表）对多（附表）关联查询
+    多对一关联查询
+    一对多关联查询
+    一对多-级联新增
+    高级精确查找
+    高级模糊查找
+5. CheckStyle的安装与配置，参考下面文件
+    /Mall/mall-parent/mall-common/src/main/resources/check-style/readme.txt
+6. 常用工具类的添加
+    /Mall/mall-parent/mall-common/src/main/java/com/mall/common/utils
+7. SnowflakeIdWorker，生成分布式主键ID
+8. 实现通用的增删改查
+9. 将Swagger配置类放在公共模块当中，实现所有微服务的在线API文档
+10. CentOS8上安装Docker，可以网上查找资料
+11. 在Docker上安装MySQL8并远程连接，请参考"1.框架搭建-在Docker上安装MySQL8并远程连接.txt"
+12. 启动时候自动创建数据库和数据库表，参考下面类文件
+    /Mall/mall-parent/mall-common/src/main/java/com/mall/common/datasource/DataSourceConfig.java
+13. 允许全局跨域访问配置
+    /Mall/mall-parent/mall-common/src/main/java/com/mall/common/base/config/CORSConfig.java
 
-条件准备
+
+
+条件准备：
 1. 代码项目环境
 2. CentOS虚拟镜像（CentOS 8 64-bit.vmwarevm），里面包含了Docker，Docker中安装了MySQL8，在Windows或者Mac安装到虚拟机即可
 3. 明确虚拟机和本机的IP地址
 
-
-步骤：
+操作步骤：
 1. 启动下面地址的EurekaServerApplication.java，启动EurekaServer,可以在浏览器上访问http://127.0.0.1:7001/验证
     /Mall/mall-parent/mall-eureka/src/main/java/com/mall/EurekaServerApplication.java
 2. 连接CentOS8，并启动MySQL（数据库一般设置的是随着服务器的启动而启动，一般都是开着的），利用Navicat连接测试。MySQL的连接信息是在下面文件中配置

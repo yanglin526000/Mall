@@ -3,10 +3,7 @@
 2. 实现文件信息封装类和文件操作工具类，文件操作工具类实现了文件的上传，下载，删除，文件信息获取
 3. 基于文件存储微服务，完成文件上传的API接口，利用Postman工具测试上传成功，访问图片地址成功
 
-
-下面操作可以操作成果：
-
-条件准备
+条件准备：
 1. 代码项目环境
 2. CentOS虚拟镜像（CentOS 8 64-bit.vmwarevm），里面包含了Docker，Docker中安装了FastDFS，安装明细请参照"2.分布式文件存储FastDFS-FastDFS在Docker上的安装步骤和细节说明.txt"
 3. 明确虚拟机和本机的IP地址
@@ -14,8 +11,7 @@
     /Mall/mall-parent/mall-service/mall-service-file/src/main/resources/application.properties
     /Mall/mall-parent/mall-service/mall-service-file/src/main/resources/fdfs_client.conf
 
-
-步骤：
+操作步骤：
 1. 启动下面地址的EurekaServerApplication.java，启动EurekaServer,可以在浏览器上访问http://127.0.0.1:7001/验证
     /Mall/mall-parent/mall-eureka/src/main/java/com/mall/EurekaServerApplication.java
 2. 连接CentOS8，并启动FastDFS的tracker，storage的docker实例（一般设置的是随着服务器的启动而启动，一般都是开着的）。
