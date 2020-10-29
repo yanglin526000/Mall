@@ -1,4 +1,4 @@
-第四天主要是，了解lua脚本语言，利用canal实现广告缓存：
+第四天主要是，了解lua脚本语言，利用canal实现广告缓存（但是还是没基于Canal实现MySQL数据同步）：
 1. 了解lua语言，及其安装，安装步骤请参考"4.lua、Canal实现广告缓存-readme.txt"。
 2. OpenResty的了解、安装和测试，请参考"4.lua、Canal实现广告缓存-readme.txt"。
 3. 广告缓存的载入与读取，关系Nginx，Redis，这个还有些不熟悉
