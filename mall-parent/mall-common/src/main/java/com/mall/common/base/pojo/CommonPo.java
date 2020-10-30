@@ -60,7 +60,8 @@ public class CommonPo {
     private Long seq;
 
     @ApiModelProperty(hidden = true)
-    @Column(name = "is_delete", columnDefinition = "TINYINT(2)", nullable = false)
+    @Column(name = "is_delete", columnDefinition = "TINYINT(2)")
+//    @Column(name = "is_delete", columnDefinition = "TINYINT(2)", nullable = false)
     private Byte isDelete;
 
     public CommonPo() {

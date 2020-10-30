@@ -34,10 +34,10 @@ public class Sku extends CommonPo {
     @Column(name = "alert_num")
     private Integer alertNum; //库存预警数量
 
-    @Column(name = "image")
+    @Column(name = "image", columnDefinition = "TEXT")
     private String image;
 
-    @Column(name = "images")
+    @Column(name = "images", columnDefinition = "TEXT")
     private String images;
 
     @Column(name = "weight")
@@ -56,7 +56,7 @@ public class Sku extends CommonPo {
     @Column(name = "brand_name")
     private String brandName;
 
-    @Column(name = "spec")
+    @Column(name = "spec", columnDefinition = "TEXT")
     private String spec; //规格
 
     @Column(name = "sale_num")
