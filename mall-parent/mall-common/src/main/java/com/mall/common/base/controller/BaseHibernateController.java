@@ -147,10 +147,12 @@ public abstract class BaseHibernateController<T> {
             @ApiImplicitParam(name = "size", value = "每页显示数量，默认每页数量为"
                     + ConstantUtil.DEFAULT_PAGE_SIZE, required = false, dataType = "String", paramType = "query")})
     @GetMapping("exactSearch")
-    public ResponseEntity<Object> exactSearch(T t,
-                                              @RequestParam(value = "page", required = false, defaultValue = ConstantUtil.DEFAULT_PAGE_INDEX) Integer page,
-                                              @RequestParam(value = "size", required = false, defaultValue = ConstantUtil.DEFAULT_PAGE_SIZE) Integer size) {
+    public ResponseEntity<Map<String, Object>> exactSearch(T t,
+                                                           @RequestParam(value = "page", required = false, defaultValue = ConstantUtil.DEFAULT_PAGE_INDEX) Integer page,
+                                                           @RequestParam(value = "size", required = false, defaultValue = ConstantUtil.DEFAULT_PAGE_SIZE) Integer size) {
         Map<String, Object> result = new HashMap<>(ConstantUtil.RESULT_MAP_INIT_COUNT);
+        // 查询时候设置Id为空
+        ParamUtil.putFieldForce(t, "id", null);
         Map<String, Object> r = baseHibernateService.listAccurate(t, PageRequest.of(page, size));
         result.put("data", r.get("list"));
         result.put("pageInfo", r.get("pageInfo"));

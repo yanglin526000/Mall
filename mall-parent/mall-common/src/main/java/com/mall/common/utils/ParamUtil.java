@@ -32,44 +32,64 @@ public final class ParamUtil {
         if (o == null || fieldValue == null) {
             return null;
         }
-        try {
-            Field f = null;
-            try {
-                f = o.getClass().getDeclaredField(fieldName);
-            } catch (Exception e) {
-                f = o.getClass().getSuperclass().getDeclaredField(fieldName);
-            }
+        Field f = getSelfAndSuperClassFields(o).stream().filter(m -> fieldName.equals(m.getName())).findFirst().orElse(null);
+        if (f != null) {
             f.setAccessible(true);
-            // 属性值为空字符串时候，将对应字段值为空，否则正常设置属性值
-            if ("".equals(fieldValue.toString().trim())) {
-                f.set(o, null);
-            } else {
-                Object fv = null;
-                // 传过来的值是对应实例
-                if (f.getType().isInstance(fieldValue)) {
-                    fv = fieldValue;
-                } else if (Date.class.getName().equals(f.getType().getName())) {
-                    // 日期类型和其他常用类型的处理
-                    fv = f.getType().getDeclaredConstructor(long.class)
-                            .newInstance(Long.parseLong(fieldValue.toString().trim()));
+            try {
+                // 属性值为空字符串时候，将对应字段值为空，否则正常设置属性值
+                if ("".equals(fieldValue.toString().trim())) {
+                    f.set(o, null);
                 } else {
-                    fv = f.getType().getDeclaredConstructor(String.class).newInstance(fieldValue.toString().trim());
+                    Object fv = null;
+                    // 传过来的值是对应实例
+                    if (f.getType().isInstance(fieldValue)) {
+                        fv = fieldValue;
+                    } else if (Date.class.getName().equals(f.getType().getName())) {
+                        // 日期类型和其他常用类型的处理
+                        fv = f.getType().getDeclaredConstructor(long.class)
+                                .newInstance(Long.parseLong(fieldValue.toString().trim()));
+                    } else {
+                        fv = f.getType().getDeclaredConstructor(String.class).newInstance(fieldValue.toString().trim());
+                    }
+                    if (ArrayList.class.equals(fieldValue.getClass())) {
+                        o.getClass()
+                                .getDeclaredMethod(
+                                        "set" + f.getName().substring(0, 1).toUpperCase() + f.getName().substring(1),
+                                        f.getType())
+                                .invoke(o, fv);
+                    } else {
+                        f.set(o, fv);
+                    }
                 }
-                if (ArrayList.class.equals(fieldValue.getClass())) {
-                    o.getClass()
-                            .getDeclaredMethod(
-                                    "set" + f.getName().substring(0, 1).toUpperCase() + f.getName().substring(1),
-                                    f.getType())
-                            .invoke(o, fv);
-                } else {
-                    f.set(o, fv);
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            return o;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return null;
+        return o;
+    }
+
+    /**
+     * <p>
+     * Put Field
+     * </p>
+     *
+     * @param o          Object
+     * @param fieldName  String
+     * @param fieldValue Object
+     * @author yanglin
+     * @date 2020-06-22 18:56:18
+     */
+    public static Object putFieldForce(Object o, String fieldName, Object fieldValue) {
+        Field f = getSelfAndSuperClassFields(o).stream().filter(m -> fieldName.equals(m.getName())).findFirst().orElse(null);
+        if (f != null) {
+            f.setAccessible(true);
+            try {
+                f.set(o, fieldValue);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return o;
     }
 
     /**
