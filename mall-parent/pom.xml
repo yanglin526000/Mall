@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.3.1.RELEASE</version>
+        <version>2.3.5.RELEASE</version>
         <!-- 查找顺序：relativePath元素中的地址–本地仓库–远程仓库，设定一个空值将始终从仓库中获取，不从本地路径获取。 -->
         <relativePath/>
     </parent>
@@ -34,7 +34,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>11</java.version>
+        <java.version>15</java.version>
         <spring-cloud.version>Hoxton.SR4</spring-cloud.version>
         <!-- 打包时跳过测试 -->
         <skipTests>true</skipTests>
