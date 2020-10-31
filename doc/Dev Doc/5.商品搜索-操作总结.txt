@@ -1,0 +1,23 @@
+第五天主要是商品搜索，关于：
+1. ElasticSearch和IK分词器在Docker上的安装
+2. Kibana在Docker上的安装及基本使用，
+3. 基于SpringData Elasticsearch从MySQL数据库导入到ElasticSearch数据库
+4. Feign的使用
+
+条件准备：
+1. 代码项目环境
+2. CentOS虚拟镜像（CentOS 8 64-bit.vmwarevm）
+3. 明确虚拟机和本机的IP地址
+4. 下面文件可以配置文件服务器的参数
+    /Mall/mall-parent/mall-service/mall-service-search/src/main/resources/application.yml
+
+操作步骤：
+1. 启动下面地址的EurekaServerApplication.java，启动EurekaServer,可以在浏览器上访问http://127.0.0.1:7001/验证
+    /Mall/mall-parent/mall-eureka/src/main/java/com/mall/EurekaServerApplication.java
+
+
+
+
+
+
+
