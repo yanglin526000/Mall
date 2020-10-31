@@ -10,6 +10,8 @@
 3. 明确虚拟机和本机的IP地址
 4. 下面文件可以配置文件服务器的参数
     /Mall/mall-parent/mall-service/mall-service-search/src/main/resources/application.yml
+5. 注意数据库数据的导入
+
 
 操作步骤：
 1. 启动下面地址的EurekaServerApplication.java，启动EurekaServer,可以在浏览器上访问http://127.0.0.1:7001/验证
