@@ -1,6 +1,5 @@
 package com.mall.search.pojo;
 
-import com.mall.goods.pojo.Sku;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -8,6 +7,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Data
 @Document(indexName = "skuinfo")
-public class SkuInfo extends Sku {
+public class SkuInfo {
 
     //@id 表示文档的唯一标识
     @Id
@@ -51,6 +51,44 @@ public class SkuInfo extends Sku {
     //品牌名称
     @Field(type = FieldType.Keyword)
     private String brandName;
+
+    private String sn;
+
+    private Integer num;
+
+    private Integer alertNum; //库存预警数量
+
+    private String image;
+
+    private String images;
+
+    private Integer weight;
+
+    private String spuId;
+
+    private String categoryId;
+
+    private String spec; //规格
+
+    private Long saleNum; //销量
+
+    private Long commentNum; //评论数
+
+    private Byte status; //商品状态 1-正常，2-下架，3-删除
+
+    private Long createUserId;
+
+    private Long updateUserId;
+
+    private Date createTime;
+
+    private Date updateTime;
+
+    private String remark;
+
+    private Long seq;
+
+    private Byte isDelete;
 
     //动态的域的添加和变化
     //规格参数

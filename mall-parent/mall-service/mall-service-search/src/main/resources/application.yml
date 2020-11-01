@@ -3,10 +3,15 @@ server:
 spring:
   application:
     name: search
-  data:
-    elasticsearch:
-      cluster-name: mall-docker-cluster
-      cluster-nodes: 172.16.26.128:9300
+  elasticsearch:
+    rest:
+      uris: http://172.16.26.128:9200
+  #  旧的ElasticSearch配置，不过还是建议在Java类中配置，以方便后面扩展和调试
+  #  data:
+  #    elasticsearch:
+  #      cluster-name: mall-docker-cluster
+  #      cluster-nodes: http://172.16.26.128:9200
+
 eureka:
   client:
     serviceUrl:
@@ -16,7 +21,8 @@ eureka:
 feign:
   hystrix:
     enabled: true
-# #超时配置
+
+#超时配置
 ribbon:
   ReadTimeout: 300000
 

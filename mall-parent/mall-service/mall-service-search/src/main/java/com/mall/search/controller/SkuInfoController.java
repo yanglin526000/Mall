@@ -1,17 +1,11 @@
 package com.mall.search.controller;
 
-import com.mall.goods.feign.SkuFeign;
-import com.mall.goods.pojo.Sku;
-import com.mall.search.pojo.SkuInfo;
+import com.mall.search.service.SkuService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Map;
 
 /*
  * <p>
@@ -24,19 +18,15 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/search")
-public class SkuController {
+public class SkuInfoController {
 
     @Autowired
-    private SkuFeign skuFeign;
-
-    @Autowired
-    private DiscoveryClient client;
+    private SkuService skuService;
 
     @GetMapping("/import")
-    public ResponseEntity<Map<String, Object>> importEs() {
-        ResponseEntity<Map<String, Object>> r = skuFeign.exactSearch(new Sku(), 0, 100);
-        List<SkuInfo> skuInfoList = (List<SkuInfo>) r.getBody().get("data");
-        return r;
+    public ResponseEntity<Object> importEs() {
+        skuService.importEs();
+        return ResponseEntity.ok("成功");
     }
 
 }

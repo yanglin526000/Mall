@@ -3,23 +3,24 @@
 2. Kibana在Docker上的安装及基本使用，
 3. 基于SpringData Elasticsearch从MySQL数据库导入到ElasticSearch数据库
 4. Feign的使用
+5. SpringBoot集成ElasticSearch7，并实现数据导入
 
 条件准备：
 1. 代码项目环境
-2. CentOS虚拟镜像（CentOS 8 64-bit.vmwarevm）
+2. CentOS虚拟镜像（CentOS 8 64-bit.vmwarevm），ElasticSearch，Ik分词器以及Kibana都要安装好
 3. 明确虚拟机和本机的IP地址
 4. 下面文件可以配置文件服务器的参数
     /Mall/mall-parent/mall-service/mall-service-search/src/main/resources/application.yml
-5. 注意数据库数据的导入
+    /Mall/mall-parent/mall-service/mall-service-search/src/main/java/com/mall/search/ElasticSearchClientConfig.java
+5. 注意MySQL数据库数据的导入，以及从MySQL导入到ElasticSearch中
 
 
 操作步骤：
 1. 启动下面地址的EurekaServerApplication.java，启动EurekaServer,可以在浏览器上访问http://127.0.0.1:7001/验证
     /Mall/mall-parent/mall-eureka/src/main/java/com/mall/EurekaServerApplication.java
-
-
-
-
-
-
-
+2. 连接CentOS8，并启动MySQL（数据库一般设置的是随着服务器的启动而启动，一般都是开着的），利用Navicat连接测试。MySQL的连接信息是在下面文件中配置
+    /Mall/mall-parent/mall-service/mall-service-goods/src/main/resources/application.properties
+3. 启动下面地址的GoodsApplication.java，已启动商品的后台服务
+    /Mall/mall-parent/mall-service/mall-service-goods/src/main/java/com/mall/goods/GoodsApplication.java
+4. 启动下面地址的SearchApplication.java，以启动商品搜索的后台服务
+    /Mall/mall-parent/mall-service/mall-service-search/src/main/java/com/mall/search/SearchApplication.java
