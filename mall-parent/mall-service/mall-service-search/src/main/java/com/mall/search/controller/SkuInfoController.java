@@ -3,9 +3,9 @@ package com.mall.search.controller;
 import com.mall.search.service.SkuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /*
  * <p>
@@ -29,4 +29,13 @@ public class SkuInfoController {
         return ResponseEntity.ok("成功");
     }
 
+    /**
+     * @param searchMap 搜索的条件 map
+     * @return resultMap  返回的结果 map
+     */
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> search(@RequestBody(required = false) Map<String, Object> searchMap) {
+        Map<String, Object> result = skuService.search(searchMap);
+        return ResponseEntity.ok(result);
+    }
 }

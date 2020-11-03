@@ -6,13 +6,18 @@ import com.mall.goods.pojo.Sku;
 import com.mall.search.dao.SkuInfoElasticsearchRepository;
 import com.mall.search.pojo.SkuInfo;
 import com.mall.search.service.SkuService;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -36,6 +41,16 @@ public class SkuServiceImpl implements SkuService {
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
 
 
+    /**
+     * <p>
+     * 导入数据
+     * saveAll():通过传入对象列表的方式保存多个文档
+     * findAll():查询索引库中所有文档
+     * </p>
+     *
+     * @author yanglin
+     * @date 2020-11-03 23:06:53
+     */
     @Override
     public void importEs() {
         List<Sku> skuList = null;
@@ -60,38 +75,50 @@ public class SkuServiceImpl implements SkuService {
     }
 
 
-//    /**
-//     * @param searchMap key:
-//     *                  category     商品分类的过滤查询
-//     *                  <p>
-//     *                  brand        商品品牌的过滤查询   TCL
-//     *                  <p>
-//     *                  spec_规格的名称   value  规格的值      规格相关
-//     *                  <p>
-//     *                  price           value 价格区间的字符串 0-500   3000-*
-//     *                  <p>
-//     *                  <p>
-//     *                  pageNum   当前的页码
-//     *                  pageSize  不用传递   (写死)
-//     *                  <p>
-//     *                  <p>
-//     *                  sortField  要排序的字段  price
-//     *                  sortRule   要排序的规则 (ASC DESC)
-//     * @return
-//     */
-//
-//    @Override
-//    public Map search(Map<String, String> searchMap) {
-//        //1.获取到关键字
-//        String keywords = searchMap.get("keywords");
-//
-//        //2.判断是否为空 如果 为空 给一个默认 值:华为
-//        if (StringUtils.isEmpty(keywords)) {
-//            keywords = "华为";
-//        }
-//        //3.创建 查询构建对象
-//        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
-//        //4.设置 查询的条件
+    /**
+     * @param searchMap key:
+     *                  category     商品分类的过滤查询
+     *                  <p>
+     *                  brand        商品品牌的过滤查询   TCL
+     *                  <p>
+     *                  spec_规格的名称   value  规格的值      规格相关
+     *                  <p>
+     *                  price           value 价格区间的字符串 0-500   3000-*
+     *                  <p>
+     *                  <p>
+     *                  pageNum   当前的页码
+     *                  pageSize  不用传递   (写死)
+     *                  <p>
+     *                  <p>
+     *                  sortField  要排序的字段  price
+     *                  sortRule   要排序的规则 (ASC DESC)
+     * @return
+     */
+
+    @Override
+    public Map<String, Object> search(Map<String, Object> searchMap) {
+
+//        //设置索引信息(绑定实体类)  返回IndexOperations
+//        IndexOperations indexOperations = elasticsearchRestTemplate.indexOps(SkuInfo.class);
+//        //创建索引库
+//        indexOperations.create();
+//        //Creates the index mapping for the entity this IndexOperations is bound to.
+//        //为该IndexOperations绑定到的实体创建索引映射。  有一个为给定类创建索引的重载,需要类的字节码文件
+//        Document mapping = indexOperations.createMapping();
+//        //writes a mapping to the index  将刚刚通过类创建的映射写入索引
+//        indexOperations.putMapping(mapping);
+
+        //1.获取到关键字
+        Map<String, Object> keyInput = (Map<String, Object>) searchMap.get("keyInput");
+        String keywords = String.valueOf(keyInput.get("keywords"));
+
+        //2.判断是否为空 如果 为空 给一个默认 值:华为
+        if (StringUtils.isEmpty(keywords)) {
+            keywords = "华为";
+        }
+        //3.创建 查询构建对象
+        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+        //4.设置 查询的条件
 //
 //        // 4.1 商品分类的列表展示: 按照商品分类的名称来分组
 //        //terms  指定分组的一个别名
@@ -113,28 +140,27 @@ public class SkuServiceImpl implements SkuService {
 //        nativeSearchQueryBuilder.withHighlightFields(new HighlightBuilder.Field("name"));
 //        //设置前缀 和 后缀
 //        nativeSearchQueryBuilder.withHighlightBuilder(new HighlightBuilder().preTags("<em style=\"color:red\">").postTags("</em>"));
-//
-//
-//        //匹配查询  先分词 再查询  主条件查询
-//        //参数1 指定要搜索的字段
-//        //参数2 要搜索的值(先分词 再搜索)
-//        //nativeSearchQueryBuilder.withQuery(QueryBuilders.matchQuery("name", keywords));
-//        //从多个字段中搜索数据
+
+
+        //匹配查询  先分词 再查询  主条件查询
+        //参数1 指定要搜索的字段
+        //参数2 要搜索的值(先分词 再搜索)
+        nativeSearchQueryBuilder.withQuery(QueryBuilders.queryStringQuery(keywords).field("name"));
+        //从多个字段中搜索数据
 //        nativeSearchQueryBuilder.withQuery(QueryBuilders.multiMatchQuery(keywords, "name", "categoryName", "brandName"));
-//
-//
+
 //        //========================过滤查询 开始=====================================
 //
 //        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 //
 //        //4.4 过滤查询的条件设置   商品分类的条件
-//        String category = searchMap.get("category");
+//        String category = String.valueOf(keyInput.get("category"));
 //
 //        if (!StringUtils.isEmpty(category)) {
 //            boolQueryBuilder.filter(QueryBuilders.termQuery("categoryName", category));
 //        }
 //        //4.5 过滤查询的条件设置   商品品牌的条件
-//        String brand = searchMap.get("brand");
+//        String brand = String.valueOf(keyInput.get("brand"));
 //
 //        if (!StringUtils.isEmpty(brand)) {
 //            boolQueryBuilder.filter(QueryBuilders.termQuery("brandName", brand));
@@ -142,16 +168,16 @@ public class SkuServiceImpl implements SkuService {
 //
 //        //4.6 过滤查询的条件设置   规格条件
 //
-//        if (searchMap != null) {
-//            for (String key : searchMap.keySet()) {//{ brand:"",category:"",spec_网络:"电信4G"}
+//        if (keyInput != null) {
+//            for (String key : keyInput.keySet()) {//{ brand:"",category:"",spec_网络:"电信4G"}
 //                if (key.startsWith("spec_")) {
 //                    //截取规格的名称
-//                    boolQueryBuilder.filter(QueryBuilders.termQuery("specMap." + key.substring(5) + ".keyword", searchMap.get(key)));
+//                    boolQueryBuilder.filter(QueryBuilders.termQuery("specMap." + key.substring(5) + ".keyword", keyInput.get(key)));
 //                }
 //            }
 //        }
 //        //4.7 过滤查询的条件设置   价格区间的过滤查询
-//        String price = searchMap.get("price");// 0-500  3000-*
+//        String price = String.valueOf(keyInput.get("price"));// 0-500  3000-*
 //        if (!StringUtils.isEmpty(price)) {
 //            //获取值 按照- 切割
 //            String[] split = price.split("-");
@@ -164,46 +190,52 @@ public class SkuServiceImpl implements SkuService {
 //            }
 //
 //        }
-//
-//
-//        //过滤查询
+
+
+        //过滤查询
 //        nativeSearchQueryBuilder.withFilter(boolQueryBuilder);
-//
-//        //========================过滤查询 结束=====================================
-//
-//
+//        nativeSearchQueryBuilder.withQuery(boolQueryBuilder);
+
+        //========================过滤查询 结束=====================================
+
+
 //        //分页查询
 //
 //        //第一个参数:指定当前的页码  注意: 如果是第一页 数值为0
 //        //第二个参数:指定当前的页的显示的行
-//        String pageNum1 = searchMap.get("pageNum");
-//        Integer pageNum = Integer.valueOf(pageNum1);
+//        Map<String, Object> pageInfo = (Map<String, Object>) searchMap.get("pageInfo");
 //
-//        Integer pageSize = 30;
+//        Integer pageNum = Integer.valueOf(String.valueOf(pageInfo.get("pageNum")));
+//        Integer pageSize = Integer.valueOf(String.valueOf(pageInfo.get("pageSize")));
 //
-//        nativeSearchQueryBuilder.withPageable(PageRequest.of(pageNum - 1, pageSize));
+//        nativeSearchQueryBuilder.withPageable(PageRequest.of(pageNum, pageSize));
 //
 //
 //        //排序操作
 //        //获取排序的字段 和要排序的规则
-//        String sortField = searchMap.get("sortField");//price
-//        String sortRule = searchMap.get("sortRule");//DESC ASC
-//        if (!StringUtils.isEmpty(sortField) && !StringUtils.isEmpty(sortRule)) {
-//            //执行排序
-//            nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(sortField).order(sortRule.equalsIgnoreCase("ASC") ? SortOrder.ASC : SortOrder.DESC));
-//            //nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(sortField).order(SortOrder.valueOf(sortRule)));
+//        List<Map<String, String>> sortList = (List<Map<String, String>>) searchMap.get("sortInfo");
+//
+//
+//        if (!CollectionUtils.isEmpty(sortList)) {
+//            for (Map<String, String> sort : sortList) {
+//                nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(sort.get("field")).order(SortOrder.ASC.equals(sort.get("field")) ? SortOrder.ASC : SortOrder.DESC));
+//            }
 //        }
-//
-//        //5.构建查询对象(封装了查询的语法)
-//        NativeSearchQuery nativeSearchQuery = nativeSearchQueryBuilder.build();
-//
-//        //6.执行查询
+
+
+        //5.构建查询对象(封装了查询的语法)
+        NativeSearchQuery nativeSearchQuery = nativeSearchQueryBuilder.build();
+
+        //6.执行查询
+        SearchHits<SkuInfo> searchResult = elasticsearchRestTemplate.search(nativeSearchQuery, SkuInfo.class);
+
+
 //        AggregatedPage<SkuInfo> skuInfos = elasticsearchTemplate.queryForPage(nativeSearchQuery, SkuInfo.class, new SearchResultMapperImpl());
 //
 //
 //        // 6.2 获取聚合分组结果  获取商品分类的列表数据
-//        StringTerms stringTermsCategory = (StringTerms) skuInfos.getAggregation("skuCategorygroup");
-//        List<String> categoryList = getStringsCategoryList(stringTermsCategory);
+//        Aggregations aggregations = searchResult.getAggregations();
+//        Aggregation skuCategorygroup = aggregations.get("skuCategorygroup");
 //
 //
 //        //6.3 获取 品牌分组结果 列表数据
@@ -221,7 +253,8 @@ public class SkuServiceImpl implements SkuService {
 //        int totalPages = skuInfos.getTotalPages();//总页数
 //        long totalElements = skuInfos.getTotalElements();//总记录数
 //
-//        Map<String, Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("data", searchResult);
 //        resultMap.put("categoryList", categoryList);//商品分类的列表数据
 //        resultMap.put("brandList", brandList);   //商品品牌的列表数据
 //        resultMap.put("specMap", specMap);   //商品规格的列表数据展示
@@ -230,66 +263,67 @@ public class SkuServiceImpl implements SkuService {
 //        resultMap.put("totalPages", totalPages);
 //        resultMap.put("pageNum", pageNum);
 //        resultMap.put("pageSize", pageSize);
-//        return resultMap;
-//    }
-//
-//    private Map<String, Set<String>> getStringSetMap(StringTerms stringTermsSpec) {
-//        //key :规格的名称
-//        //value :规格名称对应的选项的多个值集合set
-//        Map<String, Set<String>> specMap = new HashMap<String, Set<String>>();
-//        Set<String> specValues = new HashSet<String>();
-//        if (stringTermsSpec != null) {
-//            //1. 获取分组的结果集
-//            for (StringTerms.Bucket bucket : stringTermsSpec.getBuckets()) {
-//                //2.去除结果集的每一行数据()   {"手机屏幕尺寸":"5.5寸","网络":"电信4G","颜色":"白","测试":"s11","机身内存":"128G","存储":"16G","像素":"300万像素"}
-//                String keyAsString = bucket.getKeyAsString();
-//
-//                //3.转成JSON 对象  map  key :规格的名称  value:规格名对应的选项的单个值
-//                Map<String, String> map = JSON.parseObject(keyAsString, Map.class);
-//                for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
-//                    String key = stringStringEntry.getKey();//规格名称   手机屏幕尺寸
-//                    String value = stringStringEntry.getValue();//规格的名称对应的单个选项值 5.5寸
-//
-//                    //先从原来的specMap中 获取 某一个规格名称 对应的规格的选项值集合
-//                    specValues = specMap.get(key);
-//                    if (specValues == null) {
-//                        specValues = new HashSet<>();
-//                    }
-//                    specValues.add(value);
-//                    //4.提取map中的值放入到返回的map中
-//                    specMap.put(key, specValues);
-//                }
-//            }
-//        }
-//        return specMap;
-//    }
-//
-//    private List<String> getStringsBrandList(StringTerms stringTermsBrand) {
-//        List<String> brandList = new ArrayList<>();
-//        if (stringTermsBrand != null) {
-//            for (StringTerms.Bucket bucket : stringTermsBrand.getBuckets()) {
-//                String keyAsString = bucket.getKeyAsString();//品牌的名称 huawei
-//                brandList.add(keyAsString);
-//            }
-//        }
-//        return brandList;
-//    }
-//
-//    /**
-//     * 获取分组结果   商品分类的分组结果
-//     *
-//     * @param stringTermsCategory
-//     * @return
-//     */
-//    private List<String> getStringsCategoryList(StringTerms stringTermsCategory) {
-//        List<String> categoryList = new ArrayList<>();
-//        if (stringTermsCategory != null) {
-//            for (StringTerms.Bucket bucket : stringTermsCategory.getBuckets()) {
-//                String keyAsString = bucket.getKeyAsString();
-//                System.out.println(keyAsString);//就是商品分类的数据
-//                categoryList.add(keyAsString);
-//            }
-//        }
-//        return categoryList;
-//    }
+//        ResultMap.pageInfo(resultMap, searchResult.getTotalHits(), pageNum, pageSize);
+        return resultMap;
+    }
+
+    private Map<String, Set<String>> getStringSetMap(StringTerms stringTermsSpec) {
+        //key :规格的名称
+        //value :规格名称对应的选项的多个值集合set
+        Map<String, Set<String>> specMap = new HashMap<String, Set<String>>();
+        Set<String> specValues = new HashSet<String>();
+        if (stringTermsSpec != null) {
+            //1. 获取分组的结果集
+            for (StringTerms.Bucket bucket : stringTermsSpec.getBuckets()) {
+                //2.去除结果集的每一行数据()   {"手机屏幕尺寸":"5.5寸","网络":"电信4G","颜色":"白","测试":"s11","机身内存":"128G","存储":"16G","像素":"300万像素"}
+                String keyAsString = bucket.getKeyAsString();
+
+                //3.转成JSON 对象  map  key :规格的名称  value:规格名对应的选项的单个值
+                Map<String, String> map = JSON.parseObject(keyAsString, Map.class);
+                for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
+                    String key = stringStringEntry.getKey();//规格名称   手机屏幕尺寸
+                    String value = stringStringEntry.getValue();//规格的名称对应的单个选项值 5.5寸
+
+                    //先从原来的specMap中 获取 某一个规格名称 对应的规格的选项值集合
+                    specValues = specMap.get(key);
+                    if (specValues == null) {
+                        specValues = new HashSet<>();
+                    }
+                    specValues.add(value);
+                    //4.提取map中的值放入到返回的map中
+                    specMap.put(key, specValues);
+                }
+            }
+        }
+        return specMap;
+    }
+
+    private List<String> getStringsBrandList(StringTerms stringTermsBrand) {
+        List<String> brandList = new ArrayList<>();
+        if (stringTermsBrand != null) {
+            for (StringTerms.Bucket bucket : stringTermsBrand.getBuckets()) {
+                String keyAsString = bucket.getKeyAsString();//品牌的名称 huawei
+                brandList.add(keyAsString);
+            }
+        }
+        return brandList;
+    }
+
+    /**
+     * 获取分组结果   商品分类的分组结果
+     *
+     * @param stringTermsCategory
+     * @return
+     */
+    private List<String> getStringsCategoryList(StringTerms stringTermsCategory) {
+        List<String> categoryList = new ArrayList<>();
+        if (stringTermsCategory != null) {
+            for (StringTerms.Bucket bucket : stringTermsCategory.getBuckets()) {
+                String keyAsString = bucket.getKeyAsString();
+                System.out.println(keyAsString);//就是商品分类的数据
+                categoryList.add(keyAsString);
+            }
+        }
+        return categoryList;
+    }
 }
