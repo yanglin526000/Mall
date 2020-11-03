@@ -12,6 +12,7 @@
 4. 下面文件可以配置文件服务器的参数
     /Mall/mall-parent/mall-service/mall-service-search/src/main/resources/application.yml
     /Mall/mall-parent/mall-service/mall-service-search/src/main/java/com/mall/search/ElasticSearchClientConfig.java
+    org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientProperties
 5. 注意MySQL数据库数据的导入，以及从MySQL导入到ElasticSearch中
 
 
