@@ -9,6 +9,7 @@ import com.mall.search.pojo.SkuInfo;
 import com.mall.search.service.SkuService;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -126,16 +127,16 @@ public class SkuServiceImpl implements SkuService {
         //3.创建 查询构建对象
         NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
         //4.设置 查询的条件
-//
-//        // 4.1 商品分类的列表展示: 按照商品分类的名称来分组
-//        //terms  指定分组的一个别名
-//        //field 指定要分组的字段名
-//        //size 指定查询结果的数量 默认是10个
-//        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuCategorygroup").field("categoryName").size(50));
+
+        // 4.1 商品分类的列表展示: 按照商品分类的名称来分组
+        //terms  指定分组的一个别名
+        //field 指定要分组的字段名
+        //size 指定查询结果的数量 默认是10个
+        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuCategorygroup").field("categoryName").size(50));
 //
 //        //4.2 商品的品牌的列表展示  按照商品品牌来进行分组
 //        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuBrandgroup").field("brandName").size(100));
-//
+
 //        //4.3 商品的规格的列表展示   按照商品的规格的字段spec 进行分组
 //        //规则 要求 字段 是一个keyword类型的  spec.keyword
 //        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuSpecgroup").field("spec.keyword").size(500));
@@ -172,17 +173,6 @@ public class SkuServiceImpl implements SkuService {
         if (!StringUtils.isEmpty(brand)) {
             boolQueryBuilder.filter(QueryBuilders.termQuery("brandName", brand));
         }
-//
-//        //4.6 过滤查询的条件设置   规格条件
-//
-//        if (keyInput != null) {
-//            for (String key : keyInput.keySet()) {//{ brand:"",category:"",spec_网络:"电信4G"}
-//                if (key.startsWith("spec_")) {
-//                    //截取规格的名称
-//                    boolQueryBuilder.filter(QueryBuilders.termQuery("specMap." + key.substring(5) + ".keyword", keyInput.get(key)));
-//                }
-//            }
-//        }
         //4.7 过滤查询的条件设置   价格区间的过滤查询
         String price = String.valueOf(keyInput.get("price"));// 0-500  3000-*
         if (!StringUtils.isEmpty(price)) {
@@ -236,7 +226,6 @@ public class SkuServiceImpl implements SkuService {
         SearchHits<SkuInfo> searchResult = elasticsearchRestTemplate.search(nativeSearchQuery, SkuInfo.class);
 
 
-//        AggregatedPage<SkuInfo> skuInfos = elasticsearchTemplate.queryForPage(nativeSearchQuery, SkuInfo.class, new SearchResultMapperImpl());
 //
 //
 //        // 6.2 获取聚合分组结果  获取商品分类的列表数据
@@ -254,15 +243,8 @@ public class SkuServiceImpl implements SkuService {
 //        Map<String, Set<String>> specMap = getStringSetMap(stringTermsSpec);
 //
 //        //7.获取结果  返回map
-//
-//        List<SkuInfo> content = skuInfos.getContent();//当前的页的集合
-//        int totalPages = skuInfos.getTotalPages();//总页数
-//        long totalElements = skuInfos.getTotalElements();//总记录数
-//
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("data", searchResult);
-        resultMap.put("pageNum", pageNum);
-        resultMap.put("pageSize", pageSize);
         ResultMap.pageInfo(resultMap, searchResult.getTotalHits(), pageNum, pageSize);
         return resultMap;
     }
