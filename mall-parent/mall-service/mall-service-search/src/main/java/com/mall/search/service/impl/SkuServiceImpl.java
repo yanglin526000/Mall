@@ -1,6 +1,7 @@
 package com.mall.search.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.mall.common.utils.ResultMap;
 import com.mall.goods.feign.SkuFeign;
 import com.mall.goods.pojo.Sku;
 import com.mall.search.dao.SkuInfoElasticsearchRepository;
@@ -9,6 +10,7 @@ import com.mall.search.service.SkuService;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
@@ -199,16 +201,16 @@ public class SkuServiceImpl implements SkuService {
         //========================过滤查询 结束=====================================
 
 
-//        //分页查询
-//
-//        //第一个参数:指定当前的页码  注意: 如果是第一页 数值为0
-//        //第二个参数:指定当前的页的显示的行
-//        Map<String, Object> pageInfo = (Map<String, Object>) searchMap.get("pageInfo");
-//
-//        Integer pageNum = Integer.valueOf(String.valueOf(pageInfo.get("pageNum")));
-//        Integer pageSize = Integer.valueOf(String.valueOf(pageInfo.get("pageSize")));
-//
-//        nativeSearchQueryBuilder.withPageable(PageRequest.of(pageNum, pageSize));
+        //分页查询
+
+        //第一个参数:指定当前的页码  注意: 如果是第一页 数值为0
+        //第二个参数:指定当前的页的显示的行
+        Map<String, Object> pageInfo = (Map<String, Object>) searchMap.get("pageInfo");
+
+        Integer pageNum = Integer.valueOf(String.valueOf(pageInfo.get("pageNum")));
+        Integer pageSize = Integer.valueOf(String.valueOf(pageInfo.get("pageSize")));
+
+        nativeSearchQueryBuilder.withPageable(PageRequest.of(pageNum, pageSize));
 //
 //
 //        //排序操作
@@ -261,9 +263,9 @@ public class SkuServiceImpl implements SkuService {
 //        resultMap.put("rows", content);
 //        resultMap.put("total", totalElements);
 //        resultMap.put("totalPages", totalPages);
-//        resultMap.put("pageNum", pageNum);
-//        resultMap.put("pageSize", pageSize);
-//        ResultMap.pageInfo(resultMap, searchResult.getTotalHits(), pageNum, pageSize);
+        resultMap.put("pageNum", pageNum);
+        resultMap.put("pageSize", pageSize);
+        ResultMap.pageInfo(resultMap, searchResult.getTotalHits(), pageNum, pageSize);
         return resultMap;
     }
 
