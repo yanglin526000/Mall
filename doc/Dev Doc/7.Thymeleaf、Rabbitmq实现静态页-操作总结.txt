@@ -1,0 +1,13 @@
+第七天主要是利用Thymeleaf、Rabbitmq实现静态页：
+1.
+
+
+
+条件准备：
+1. 代码项目环境
+2. CentOS虚拟镜像（CentOS 8 64-bit.vmwarevm），里面包含了Docker，Docker中安装了MySQL8，在Windows或者Mac安装到虚拟机即可
+3. 明确虚拟机和本机的IP地址
+
+操作步骤：
+1. 启动下面地址的EurekaServerApplication.java，启动EurekaServer,可以在浏览器上访问http://127.0.0.1:7001/验证
+    /Mall/mall-parent/mall-eureka/src/main/java/com/mall/EurekaServerApplication.java
