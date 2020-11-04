@@ -1,8 +1,6 @@
 package com.mall.search.controller;
 
 import com.mall.search.service.SkuService;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,12 +30,38 @@ public class SkuInfoController {
     }
 
     /**
-     * @param searchMap 搜索的条件 map
-     * @return resultMap  返回的结果 map
+     * <p>
+     * {
+     * "keyInput":
+     * {
+     * "keywords":"小米",
+     * "category":"手机",
+     * "brand":"小米",
+     * "price":"0-500"
+     * },
+     * "pageInfo":
+     * {
+     * "pageNum":0,
+     * "pageSize":20
+     * },
+     * "sortInfo":
+     * [
+     * {
+     * "field":"status",
+     * "rule":"ASC"
+     * },
+     * {
+     * "field":"price",
+     * "rule":"DESC"
+     * }
+     * ]
+     * }
+     * </p>
+     *
+     * @author yanglin
+     * @date 2020-11-04 22:35:30
      */
     @PostMapping
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "searchMap", value = "搜索条件", paramType = "body", defaultValue = "{}")})
     public ResponseEntity<Map<String, Object>> search(@RequestBody(required = false) Map<String, Object> searchMap) {
         Map<String, Object> result = skuService.search(searchMap);
         return ResponseEntity.ok(result);
