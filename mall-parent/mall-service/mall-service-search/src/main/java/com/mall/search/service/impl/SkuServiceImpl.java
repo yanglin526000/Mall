@@ -11,6 +11,8 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
@@ -19,6 +21,7 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -212,18 +215,18 @@ public class SkuServiceImpl implements SkuService {
         Integer pageSize = Integer.valueOf(String.valueOf(pageInfo.get("pageSize")));
 
         nativeSearchQueryBuilder.withPageable(PageRequest.of(pageNum, pageSize));
-//
-//
-//        //排序操作
-//        //获取排序的字段 和要排序的规则
-//        List<Map<String, String>> sortList = (List<Map<String, String>>) searchMap.get("sortInfo");
-//
-//
-//        if (!CollectionUtils.isEmpty(sortList)) {
-//            for (Map<String, String> sort : sortList) {
-//                nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(sort.get("field")).order(SortOrder.ASC.equals(sort.get("field")) ? SortOrder.ASC : SortOrder.DESC));
-//            }
-//        }
+
+
+        //排序操作
+        //获取排序的字段 和要排序的规则
+        List<Map<String, String>> sortList = (List<Map<String, String>>) searchMap.get("sortInfo");
+
+
+        if (!CollectionUtils.isEmpty(sortList)) {
+            for (Map<String, String> sort : sortList) {
+                nativeSearchQueryBuilder.withSort(SortBuilders.fieldSort(sort.get("field")).order(SortOrder.ASC.equals(sort.get("field")) ? SortOrder.ASC : SortOrder.DESC));
+            }
+        }
 
 
         //5.构建查询对象(封装了查询的语法)
@@ -258,12 +261,6 @@ public class SkuServiceImpl implements SkuService {
 //
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("data", searchResult);
-//        resultMap.put("categoryList", categoryList);//商品分类的列表数据
-//        resultMap.put("brandList", brandList);   //商品品牌的列表数据
-//        resultMap.put("specMap", specMap);   //商品规格的列表数据展示
-//        resultMap.put("rows", content);
-//        resultMap.put("total", totalElements);
-//        resultMap.put("totalPages", totalPages);
         resultMap.put("pageNum", pageNum);
         resultMap.put("pageSize", pageSize);
         ResultMap.pageInfo(resultMap, searchResult.getTotalHits(), pageNum, pageSize);
