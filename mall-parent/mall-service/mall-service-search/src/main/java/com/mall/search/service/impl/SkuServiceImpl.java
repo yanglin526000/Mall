@@ -9,6 +9,7 @@ import com.mall.search.pojo.SkuInfo;
 import com.mall.search.service.SkuService;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
@@ -134,14 +135,14 @@ public class SkuServiceImpl implements SkuService {
 //        //4.3 商品的规格的列表展示   按照商品的规格的字段spec 进行分组
 //        //规则 要求 字段 是一个keyword类型的  spec.keyword
 //        nativeSearchQueryBuilder.addAggregation(AggregationBuilders.terms("skuSpecgroup").field("spec.keyword").size(500));
-//
-//
-//        //4.4 设置高亮的字段 设置前缀 和 后缀
-//
-//        //设置高亮的字段 针对 商品的名称进行高亮
-//        nativeSearchQueryBuilder.withHighlightFields(new HighlightBuilder.Field("name"));
-//        //设置前缀 和 后缀
-//        nativeSearchQueryBuilder.withHighlightBuilder(new HighlightBuilder().preTags("<em style=\"color:red\">").postTags("</em>"));
+
+
+        //4.4 设置高亮的字段 设置前缀 和 后缀
+
+        //设置高亮的字段 针对 商品的名称进行高亮
+        nativeSearchQueryBuilder.withHighlightFields(new HighlightBuilder.Field("name"));
+        //设置前缀 和 后缀
+        nativeSearchQueryBuilder.withHighlightBuilder(new HighlightBuilder().preTags("<em style=\"color:red\">").postTags("</em>"));
 
 
         //匹配查询  先分词 再查询  主条件查询
