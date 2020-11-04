@@ -25,3 +25,4 @@
     /Mall/mall-parent/mall-service/mall-service-goods/src/main/java/com/mall/goods/GoodsApplication.java
 4. 启动下面地址的SearchApplication.java，以启动商品搜索的后台服务
     /Mall/mall-parent/mall-service/mall-service-search/src/main/java/com/mall/search/SearchApplication.java
+5. 访问Swagger地址可以验证接口-http://127.0.0.1:18085/swagger-ui.html
