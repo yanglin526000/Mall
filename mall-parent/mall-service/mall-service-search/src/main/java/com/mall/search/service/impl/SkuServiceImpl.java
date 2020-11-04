@@ -7,6 +7,7 @@ import com.mall.goods.pojo.Sku;
 import com.mall.search.dao.SkuInfoElasticsearchRepository;
 import com.mall.search.pojo.SkuInfo;
 import com.mall.search.service.SkuService;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -152,22 +153,22 @@ public class SkuServiceImpl implements SkuService {
         //从多个字段中搜索数据
 //        nativeSearchQueryBuilder.withQuery(QueryBuilders.multiMatchQuery(keywords, "name", "categoryName", "brandName"));
 
-//        //========================过滤查询 开始=====================================
-//
-//        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-//
-//        //4.4 过滤查询的条件设置   商品分类的条件
-//        String category = String.valueOf(keyInput.get("category"));
-//
-//        if (!StringUtils.isEmpty(category)) {
-//            boolQueryBuilder.filter(QueryBuilders.termQuery("categoryName", category));
-//        }
-//        //4.5 过滤查询的条件设置   商品品牌的条件
-//        String brand = String.valueOf(keyInput.get("brand"));
-//
-//        if (!StringUtils.isEmpty(brand)) {
-//            boolQueryBuilder.filter(QueryBuilders.termQuery("brandName", brand));
-//        }
+        //========================过滤查询 开始=====================================
+
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+
+        //4.4 过滤查询的条件设置   商品分类的条件
+        String category = String.valueOf(keyInput.get("category"));
+
+        if (!StringUtils.isEmpty(category)) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("categoryName", category));
+        }
+        //4.5 过滤查询的条件设置   商品品牌的条件
+        String brand = String.valueOf(keyInput.get("brand"));
+
+        if (!StringUtils.isEmpty(brand)) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("brandName", brand));
+        }
 //
 //        //4.6 过滤查询的条件设置   规格条件
 //
@@ -179,25 +180,24 @@ public class SkuServiceImpl implements SkuService {
 //                }
 //            }
 //        }
-//        //4.7 过滤查询的条件设置   价格区间的过滤查询
-//        String price = String.valueOf(keyInput.get("price"));// 0-500  3000-*
-//        if (!StringUtils.isEmpty(price)) {
-//            //获取值 按照- 切割
-//            String[] split = price.split("-");
-//            //过滤范围查询
-//            //0<=price<=500
-//            if (!split[1].equals("*")) {
-//                boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").from(split[0], true).to(split[1], true));
-//            } else {
-//                boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").gte(split[0]));
-//            }
-//
-//        }
+        //4.7 过滤查询的条件设置   价格区间的过滤查询
+        String price = String.valueOf(keyInput.get("price"));// 0-500  3000-*
+        if (!StringUtils.isEmpty(price)) {
+            //获取值 按照- 切割
+            String[] split = price.split("-");
+            //过滤范围查询
+            //0<=price<=500
+            if (!split[1].equals("*")) {
+                boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").from(split[0], true).to(split[1], true));
+            } else {
+                boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").gte(split[0]));
+            }
+
+        }
 
 
         //过滤查询
-//        nativeSearchQueryBuilder.withFilter(boolQueryBuilder);
-//        nativeSearchQueryBuilder.withQuery(boolQueryBuilder);
+        nativeSearchQueryBuilder.withFilter(boolQueryBuilder);
 
         //========================过滤查询 结束=====================================
 
