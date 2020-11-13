@@ -18,6 +18,7 @@ import java.util.Map;
  * @date 2020-10-31 17:26:46
  */
 @FeignClient(value = "goods")
+//@FeignClient(value = "goods", url = "${eureka.server.host}")
 @RequestMapping("/sku")
 public interface SkuFeign {
 
