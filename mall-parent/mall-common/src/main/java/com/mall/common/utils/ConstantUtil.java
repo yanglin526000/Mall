@@ -58,4 +58,8 @@ public final class ConstantUtil {
      */
     public static final String GOODS_PACKAGE_NAME = PROJECT_PACKAGE_NAME + "goods" + POJO_PACKAGE_NAME;
 
+    /**
+     * User Package Name
+     */
+    public static final String USER_PACKAGE_NAME = PROJECT_PACKAGE_NAME + "user" + POJO_PACKAGE_NAME;
 }
