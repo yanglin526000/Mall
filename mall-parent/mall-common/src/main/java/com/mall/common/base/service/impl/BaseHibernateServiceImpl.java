@@ -4,6 +4,7 @@ import com.mall.common.base.service.BaseHibernateService;
 import com.mall.common.utils.ConstantUtil;
 import com.mall.common.utils.ParamUtil;
 import com.mall.common.utils.ResultMap;
+import com.mall.common.utils.SnowflakeIdWorker;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,9 +40,18 @@ public class BaseHibernateServiceImpl<T> implements BaseHibernateService<T> {
     @Override
     public T save(T t) {
         Object idO = ParamUtil.getField(t, "id");
-        Object o = entityManager.find(t.getClass(), idO);
-        o = o == null ? t : ParamUtil.putValuesToObject(t, o);
-        return (T) entityManager.merge(o);
+
+        if (idO == null) {
+            // 新增
+            ParamUtil.putFieldForce(t, "id", SnowflakeIdWorker.nextIdString());
+            ParamUtil.putFieldForce(t, "isDelete", ConstantUtil.IS_NOT_DELETE);
+            return entityManager.merge(t);
+        } else {
+            // 修改
+            Object o = entityManager.find(t.getClass(), idO);
+            ParamUtil.putValuesToObject(t, o);
+            return (T) entityManager.merge(o);
+        }
     }
 
     @SuppressWarnings({"unchecked"})
