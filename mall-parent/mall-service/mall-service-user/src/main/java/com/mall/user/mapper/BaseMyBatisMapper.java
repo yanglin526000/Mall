@@ -1,6 +1,6 @@
 package com.mall.user.mapper;
 
-import com.mall.user.pojo.Address;
+import com.mall.user.pojo.User;
 import org.apache.ibatis.annotations.Mapper;
 
 
@@ -17,5 +17,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @author yanglin // * @param <T>
  */
 @Mapper
-public interface BaseMyBatisMapper extends MyBatisMapper<Address> {
+public interface BaseMyBatisMapper extends MyBatisMapper<User> {
 }
