@@ -1,7 +1,9 @@
 package com.mall.user.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.mall.common.base.controller.BaseHibernateController;
 import com.mall.common.base.service.BaseHibernateService;
+import com.mall.common.utils.JwtUtil;
 import com.mall.user.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,11 +11,13 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * <p>
@@ -51,14 +55,13 @@ public class UserController extends BaseHibernateController<User> {
             info.put("success", "SUCCESS");
             info.put("userInfo", userList.get(0));
 
-//            //1.生成令牌
-//            String jwt = JwtUtil.createJWT(UUID.randomUUID().toString(), JSON.toJSONString(info), null);
-//            //2.设置cookie中
-//            Cookie cookie = new Cookie("Authorization", jwt);
-//            response.addCookie(cookie);
-//            //3.设置头文件中
-//            response.setHeader("Authorization", jwt);
-
+            //1.生成令牌
+            String jwt = JwtUtil.createJWT(UUID.randomUUID().toString(), JSON.toJSONString(info), null);
+            //2.设置cookie中
+            Cookie cookie = new Cookie("Authorization", jwt);
+            response.addCookie(cookie);
+            //3.设置头文件中
+            response.setHeader("Authorization", jwt);
             return ResponseEntity.ok(info);
         } else {
             //失败
