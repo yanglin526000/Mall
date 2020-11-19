@@ -1,4 +1,4 @@
-package com.mall.common.utils;
+package com.mall.gateway.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
@@ -90,5 +90,18 @@ public class JwtUtil {
                 .setSigningKey(secretKey)
                 .parseClaimsJws(jwt)
                 .getBody();
+    }
+
+    public static void main(String[] args) {
+        String jwt = JwtUtil.createJWT("weiyibiaoshi", "aaaaaa", null);
+        System.out.println(jwt);
+        try {
+            Claims claims = JwtUtil.parseJWT(jwt);
+            System.out.println(claims);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 }
