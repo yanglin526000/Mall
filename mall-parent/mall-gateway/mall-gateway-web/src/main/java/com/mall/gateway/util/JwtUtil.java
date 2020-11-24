@@ -85,6 +85,9 @@ public class JwtUtil {
      * @throws Exception
      */
     public static Claims parseJWT(String jwt) throws Exception {
+        if (jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring("Bearer ".length()).trim();
+        }
         SecretKey secretKey = generalKey();
         return Jwts.parser()
                 .setSigningKey(secretKey)
